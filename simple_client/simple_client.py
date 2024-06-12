@@ -2,7 +2,7 @@ import socket
 import time
 
 # Client settings
-host = '10.0.0.5'  # Server IP address
+host = '10.30.0.1'  # Server IP address
 port = 1234  # Port to connect to
 source_port = 49679  
 
