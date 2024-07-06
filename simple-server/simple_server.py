@@ -12,8 +12,7 @@ def start_server():
         while True:
             data, addr = s.recvfrom(1024)
             print("Server recieved ", data.decode())
-            time.sleep(5)
-            num = int(data.decode()) + 1
+            num = int(data.decode())
             s.sendto(str(num).encode(), addr)
 
 
