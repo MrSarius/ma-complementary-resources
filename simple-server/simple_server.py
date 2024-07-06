@@ -5,6 +5,7 @@ import time
 host = '0.0.0.0'  # Server IP address
 port = 1234  # Port to listen on
 
+
 def start_server():
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
         s.bind((host, port))

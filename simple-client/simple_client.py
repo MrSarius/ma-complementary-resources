@@ -1,9 +1,10 @@
 import time
 import socket
 
-host = '10.30.0.1'  # Server Service IP address
+host = '127.0.0.1'  # Server Service IP address
 port = 1234  # Port to connect to
-time.sleep(5)
+
+
 def start_client():
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
         server_address = (host, port)
@@ -14,7 +15,6 @@ def start_client():
             print("Client recieved ", data.decode())
             time.sleep(5)
             num = int(data.decode()) + 1
-
 
 
 if __name__ == '__main__':
