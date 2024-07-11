@@ -1,0 +1,3 @@
+ebpf/**/**.o
+ebpf/**/**bpfeb.go
+ebpf/**/**bpfel.go
