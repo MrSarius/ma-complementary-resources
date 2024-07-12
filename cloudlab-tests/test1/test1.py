@@ -41,8 +41,7 @@ def register_app():
     # print(deployment_descriptor)
     head = {'Authorization': "Bearer " + token}
     url = "http://" + SYSTEM_MANAGER_URL + "/api/application"
-    ns = get_random_string(5)  # TODO ben check if reply contains this random string
-    deployment_descriptor["applications"][0]["application_namespace"] = ns
+    deployment_descriptor["applications"][0]["application_namespace"] = get_random_string(5)
     resp = requests.post(url, headers=head, json=deployment_descriptor)
 
     if resp.status_code == 200:
@@ -141,8 +140,8 @@ if __name__ == '__main__':
     scale_up_service(1, microservices[0])
     scale_up_service(1, microservices[1])
 
-    print("Waiting for 60 seconds cooldown")
-    time.sleep(2)
+    print("Waiting for 10 seconds cooldown")
+    time.sleep(10)
 
     print("Check deployment status")
     succeeded, returntext = check_deployment(microservices)
@@ -157,16 +156,19 @@ if __name__ == '__main__':
             exit(1)
         attempt += 1
         print("Deployment not finished yet")
-        time.sleep(60)
+        time.sleep(10)
         succeeded, returntext = check_deployment(microservices)
 
+    print("Waiting for test results.")
+    time.sleep(10)  # wait at least 10 seconds more such that the iperf test is done for sure
     namespace = deployment_descriptor["applications"][0]["application_namespace"]
     signal.signal(signal.SIGINT, signal_handler)
-    print('#### Benchmark started ####')
-    print('#You can now login into the machine with IP: ' + returntext)
-    print('#Then you can run the following command to check the realtime bandwidth: ')
+    print('The test should be done by now. Use the following command to read the test results from within the client '
+          'container and store them in a file called test1.json on your file system.: ')
     print('|-------------------------------------------------------------------------|')
-    print('sudo ctr -n edge.io task attach iperf.' + namespace + '.client.test.instance.0')
+    print('sudo ctr -n oakestra task exec --exec-id exec-1 test1.' + namespace + '.client.test.instance.0 cat '
+                                                                                 'test1.json > test1.json')
     print('|-------------------------------------------------------------------------|')
+    print('After recieving the test results, run the parser to transform the data (if you wish).')
     print('#When you`re done, press Ctrl+C to quit this script and undeploy the benchmark')
     signal.pause()

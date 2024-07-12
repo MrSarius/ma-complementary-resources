@@ -59,12 +59,9 @@
           "constraints": [],
           "connectivity": [],
           "cmd": [
-            "iperf3",
+            "sh",
             "-c",
-            "10.30.0.1",
-            "-u",
-            "-b",
-            "0"
+            "iperf3 -c 10.30.0.1 -u -b 0 -t 10 -J > test1.json; echo done; tail -f /dev/null"
           ],
           "environment": []
         }
