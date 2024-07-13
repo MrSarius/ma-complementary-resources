@@ -61,7 +61,7 @@
           "cmd": [
             "sh",
             "-c",
-            "iperf3 -c 10.30.0.1 -u -b 0 -t 10 -J > test1.json; echo done; tail -f /dev/null"
+            "iperf3 -c 10.30.0.1 -u -b 0 -t 10 -J > results.json; echo done >> results.json; tail -f /dev/null"
           ],
           "environment": []
         }

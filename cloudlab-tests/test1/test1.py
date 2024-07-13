@@ -1,3 +1,5 @@
+from trace import Trace
+
 from flask import Flask, request
 import time
 import csv
@@ -8,13 +10,21 @@ import os
 import random
 import socket
 import signal
+import subprocess
+
+from parser import plot_latency_timeseries
 
 hostname = socket.gethostname()
 IPAddr = socket.gethostbyname(hostname)
 
-SYSTEM_MANAGER_URL = "0.0.0.0:10000"
+SYSTEM_MANAGER_HOST = "0.0.0.0"
+SYSTEM_MANAGER_PORT = "10000"
+NET_MANAGER_PORT = "6000"
+SYSTEM_MANAGER_URL = f"{SYSTEM_MANAGER_HOST}:{SYSTEM_MANAGER_PORT}"
+NET_MANAGER_URL = f"{SYSTEM_MANAGER_HOST}:{NET_MANAGER_PORT}"
 SLA_FILE = "latency-test.json"
 SERVER_ADDRESS = "10.19.1.254"
+ENABLE_EBPF = False
 
 deployment_descriptor = json.load(open(SLA_FILE))
 
@@ -120,12 +130,57 @@ def signal_handler(sig, frame):
     sys.exit(0)
 
 
-if __name__ == '__main__':
+def enableEbpfProxy() -> bool:
+    url = "http://" + NET_MANAGER_URL + "/ebpf"
+    payload = json.dumps({
+        "name": "proxy",
+        "config": {}
+    })
+    headers = {
+        'Content-Type': 'application/json'
+    }
+    response = requests.request("POST", url, headers=headers, data=payload)
+
+    if response.status_code != 200:
+        return False
+
+    return True
+
+
+def get_results():
+    namespace = deployment_descriptor["applications"][0]["application_namespace"]
+    command = f"sudo ctr -n oakestra task exec --exec-id exec-1 test1.{namespace}.client.test.instance.0 cat results.json"
+
+    try:
+        # Run the command
+        result = subprocess.run(command, check=True, text=True, capture_output=True, shell=True)
+
+        if result.stderr:
+            print("Command error output:")
+            print(result.stderr)
+            exit(-1)
+
+        data: str = result.stdout
+        lines = data.splitlines()
+        if lines and lines[-1] == "done":
+            return '\n'.join(lines[:-1]) + '\n'
+
+    except subprocess.CalledProcessError as e:
+        print(f"Command '{e.cmd}' returned non-zero exit status {e.returncode}.")
+        print(f"Error output: {e.stderr}")
+        exit(-1)
+
+
+def run_test():
     print("Test 1 - Latency Measurement")
 
     print("Performing initial cleanup")
     delete_all_apps()
     time.sleep(5)
+
+    if ENABLE_EBPF:
+        print("Enable ebpf proxy")
+        enableEbpfProxy()
 
     print("Registration of the Iperf Application")
     appid, microservices = register_app()
@@ -136,12 +191,12 @@ if __name__ == '__main__':
         time.sleep(20)
         print("You may now fix your infrastructure and re-try the test")
         exit(1)
+    signal.signal(signal.SIGINT, signal_handler)
 
     scale_up_service(1, microservices[0])
     scale_up_service(1, microservices[1])
 
-    print("Waiting for 10 seconds cooldown")
-    time.sleep(10)
+    time.sleep(15)
 
     print("Check deployment status")
     succeeded, returntext = check_deployment(microservices)
@@ -161,14 +216,26 @@ if __name__ == '__main__':
 
     print("Waiting for test results.")
     time.sleep(10)  # wait at least 10 seconds more such that the iperf test is done for sure
-    namespace = deployment_descriptor["applications"][0]["application_namespace"]
-    signal.signal(signal.SIGINT, signal_handler)
-    print('The test should be done by now. Use the following command to read the test results from within the client '
-          'container and store them in a file called test1.json on your file system.: ')
-    print('|-------------------------------------------------------------------------|')
-    print('sudo ctr -n oakestra task exec --exec-id exec-1 test1.' + namespace + '.client.test.instance.0 cat '
-                                                                                 'test1.json > test1.json')
-    print('|-------------------------------------------------------------------------|')
-    print('After recieving the test results, run the parser to transform the data (if you wish).')
-    print('#When you`re done, press Ctrl+C to quit this script and undeploy the benchmark')
-    signal.pause()
+    results = get_results()
+    with open('results.txt', 'a') as file:
+        file.write(results + '\n')
+    return results
+
+
+def main():
+    without_ebpf = []
+    with_ebpf = []
+    for i in range(0, 2):
+        without_ebpf.append(run_test())
+
+    ENABLE_EBPF = True
+
+    for i in range(0, 2):
+        with_ebpf.append(run_test())
+
+    plot_latency_timeseries(with_ebpf)
+    plot_latency_timeseries(without_ebpf)
+
+
+if __name__ == '__main__':
+    main()
