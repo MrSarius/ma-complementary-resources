@@ -126,8 +126,23 @@ def check_deployment(microservices):
 def signal_handler(sig, frame):
     print('Cleanup process started')
     delete_all_apps()
+    delete_all_ebpf_modules()
     print('Cleanup completed!')
     sys.exit(0)
+
+
+def delete_all_ebpf_modules():
+    url = "http://" + NET_MANAGER_URL + "/ebpf"
+
+    payload = {}
+    headers = {}
+
+    response = requests.request("DELETE", url, headers=headers, data=payload)
+
+    if response.status_code != 200:
+        return False
+
+    return True
 
 
 def enableEbpfProxy() -> bool:
@@ -163,7 +178,7 @@ def get_results():
         data: str = result.stdout
         lines = data.splitlines()
         if lines and lines[-1] == "done":
-            return '\n'.join(lines[:-1]) + '\n'
+            return json.loads('\n'.join(lines[:-1]) + '\n')
 
     except subprocess.CalledProcessError as e:
         print(f"Command '{e.cmd}' returned non-zero exit status {e.returncode}.")
@@ -171,11 +186,12 @@ def get_results():
         exit(-1)
 
 
-def run_test():
+def main():
     print("Test 1 - Latency Measurement")
 
     print("Performing initial cleanup")
     delete_all_apps()
+    delete_all_ebpf_modules()
     time.sleep(5)
 
     if ENABLE_EBPF:
@@ -216,25 +232,6 @@ def run_test():
 
     print("Waiting for test results.")
     time.sleep(10)  # wait at least 10 seconds more such that the iperf test is done for sure
-    results = get_results()
-    with open('results.txt', 'a') as file:
-        file.write(results + '\n')
-    return results
-
-
-def main():
-    without_ebpf = []
-    with_ebpf = []
-    for i in range(0, 2):
-        without_ebpf.append(run_test())
-
-    ENABLE_EBPF = True
-
-    for i in range(0, 2):
-        with_ebpf.append(run_test())
-
-    plot_latency_timeseries(with_ebpf)
-    plot_latency_timeseries(without_ebpf)
 
 
 if __name__ == '__main__':

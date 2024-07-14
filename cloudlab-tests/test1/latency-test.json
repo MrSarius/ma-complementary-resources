@@ -20,7 +20,7 @@
           "bandwidth_in": 0,
           "bandwidth_out": 0,
           "storage": 0,
-          "code": "quay.io/wcaban/net-toolbox:latest",
+          "code": "docker.io/mrsarius/test1-server:latest",
           "state": "",
           "port": "",
           "addresses": {
@@ -29,15 +29,7 @@
           "added_files": [],
           "constraints": [],
           "connectivity": [],
-          "cmd": [
-            "iperf3",
-            "-s",
-            "-B",
-            "0.0.0.0",
-            "-V",
-            "-i",
-            "1"
-          ],
+          "cmd": [],
           "environment": []
         },
         {
@@ -52,18 +44,14 @@
           "bandwidth_in": 0,
           "bandwidth_out": 0,
           "storage": 0,
-          "code": "quay.io/wcaban/net-toolbox:latest",
+          "code": "docker.io/mrsarius/test1-client:latest",
           "state": "",
           "port": "",
           "added_files": [],
           "constraints": [],
           "connectivity": [],
-          "cmd": [
-            "sh",
-            "-c",
-            "iperf3 -c 10.30.0.1 -u -b 0 -t 10 -J > results.json; echo done >> results.json; tail -f /dev/null"
-          ],
-          "environment": []
+          "cmd": [],
+          "environment": ["TARGET_IP=30.0.0.1"]
         }
       ]
     }
