@@ -51,7 +51,7 @@
           "constraints": [],
           "connectivity": [],
           "cmd": [],
-          "environment": ["TARGET_IP=30.0.0.1"]
+          "environment": ["TARGET_IP=10.30.0.1", "ITERATIONS=5"]
         }
       ]
     }

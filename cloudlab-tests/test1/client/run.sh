@@ -3,14 +3,23 @@ if [ -z "$TARGET_IP" ]; then
   exit 1
 fi
 
-# Throughput test using iperf3 over TCP
-echo "Running TCP throughput test..."
-iperf3 -c 10.30.0.1 -u -b 0 -t 10 -J > throughput.json
+if [ -z "$ITERATIONS" ]; then
+  echo "ITERATIONS environment variable is not set."
+  exit 1
+fi
 
-# Jitter test using iperf3 over UDP
-echo "Running UDP jitter test..."
-iperf3 -c $TARGET_IP -u -b 10M -t 10 > jitter.json
+for (( i=1; i<=$ITERATIONS; i++ ))
+do
+  echo "Iteration $i"
 
-# Latency test using hping3 with TCP SYN packets
-echo "Running TCP SYN latency test..."
-hping3 -S -p 80 -c 5 -i 1 $TARGET_IP > latency.json
+  echo "Running TCP throughput test..."
+  iperf3 -c $TARGET_IP -b 0 -t 10 -J > throughput_$i.json
+
+  echo "Running UDP jitter test..."
+  iperf3 -c $TARGET_IP -u -b 1M -t 10 -J > jitter_$i.json
+
+  echo "Running TCP SYN latency test..."
+  hping3 -S -p 80 -c 10 -i 1 $TARGET_IP > latency_$i.json
+done
+
+echo "Done! You may collect the results now and shut down the deployment."
