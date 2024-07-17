@@ -19,7 +19,7 @@ do
   iperf3 -c $TARGET_IP -u -b 1M -t 10 -J > jitter_$i.json
 
   echo "Running TCP SYN latency test..."
-  hping3 -S -p 80 -c 10 -i 1 $TARGET_IP > latency_$i.json
+  hping3 -2 $TARGET_IP -p 12345 -d 120
 done
 
 echo "Done! You may collect the results now and shut down the deployment."
