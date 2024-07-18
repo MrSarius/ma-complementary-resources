@@ -15,9 +15,9 @@ SYSTEM_MANAGER_PORT = "10000"
 NET_MANAGER_PORT = "6000"
 SYSTEM_MANAGER_URL = f"{SYSTEM_MANAGER_HOST}:{SYSTEM_MANAGER_PORT}"
 NET_MANAGER_URL = f"{SYSTEM_MANAGER_HOST}:{NET_MANAGER_PORT}"
-SLA_FILE = "test-jitter.json"
+SLA_FILE = "test-latency.json"
 ENABLE_EBPF = False
-TEST_LENGTH = 20  # in seconds
+TEST_LENGTH = 5  # in seconds
 
 deployment_descriptor = json.load(open(SLA_FILE))
 
@@ -184,8 +184,8 @@ def get_results():
         exit(1)
 
 
-def main():
-    print("Test 1 - Throughput Measurement")
+def test_latency():
+    print("Test - Latency Measurement")
 
     print("Performing initial cleanup")
     delete_all_apps()
@@ -229,9 +229,4 @@ def main():
 
     print("Waiting for test results.")
     time.sleep(TEST_LENGTH)
-    res = get_results()
-    print(res)
-
-
-if __name__ == '__main__':
-    main()
+    return get_results()

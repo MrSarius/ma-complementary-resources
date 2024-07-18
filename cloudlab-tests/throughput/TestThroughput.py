@@ -184,8 +184,8 @@ def get_results():
         exit(1)
 
 
-def main():
-    print("Test 1 - Throughput Measurement")
+def test_throughput():
+    print("Test - Throughput Measurement")
 
     print("Performing initial cleanup")
     delete_all_apps()
@@ -229,9 +229,4 @@ def main():
 
     print("Waiting for test results.")
     time.sleep(TEST_LENGTH)
-    res = get_results()
-    print(res)
-
-
-if __name__ == '__main__':
-    main()
+    return get_results()
