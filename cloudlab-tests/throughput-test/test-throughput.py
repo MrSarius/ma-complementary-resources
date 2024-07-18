@@ -7,8 +7,6 @@ import socket
 import signal
 import subprocess
 
-from parser import plot_latency_timeseries
-
 hostname = socket.gethostname()
 IPAddr = socket.gethostbyname(hostname)
 
@@ -17,9 +15,9 @@ SYSTEM_MANAGER_PORT = "10000"
 NET_MANAGER_PORT = "6000"
 SYSTEM_MANAGER_URL = f"{SYSTEM_MANAGER_HOST}:{SYSTEM_MANAGER_PORT}"
 NET_MANAGER_URL = f"{SYSTEM_MANAGER_HOST}:{NET_MANAGER_PORT}"
-SLA_FILE = "latency-test.json"
-SERVER_ADDRESS = "10.19.1.254"
+SLA_FILE = "test-throughput.json"
 ENABLE_EBPF = False
+TEST_LENGTH = 20  # in seconds
 
 deployment_descriptor = json.load(open(SLA_FILE))
 
@@ -140,7 +138,7 @@ def delete_all_ebpf_modules():
     return True
 
 
-def enableEbpfProxy() -> bool:
+def enable_ebpf_proxy() -> bool:
     url = "http://" + NET_MANAGER_URL + "/ebpf"
     payload = json.dumps({
         "name": "proxy",
@@ -158,31 +156,36 @@ def enableEbpfProxy() -> bool:
 
 
 def get_results():
+    max_attempts = 3
     namespace = deployment_descriptor["applications"][0]["application_namespace"]
     command = f"sudo ctr -n oakestra task exec --exec-id exec-1 test1.{namespace}.client.test.instance.0 cat results.json"
 
     try:
-        # Run the command
-        result = subprocess.run(command, check=True, text=True, capture_output=True, shell=True)
+        for i in range(max_attempts):
+            # Run the command
+            result = subprocess.run(command, check=True, text=True, capture_output=True, shell=True)
 
-        if result.stderr:
-            print("Command error output:")
-            print(result.stderr)
-            exit(-1)
+            if result.stderr:
+                print("Command error output:")
+                print(result.stderr)
+                exit(1)
 
-        data: str = result.stdout
-        lines = data.splitlines()
-        if lines and lines[-1] == "done":
-            return json.loads('\n'.join(lines[:-1]) + '\n')
+            data: str = result.stdout
+            lines = data.splitlines()
+            if lines[-1] == "done":
+                return "\n".join(lines[:-1])
 
+            time.sleep(10)
+        print(f"Could not retrieve the results within {max_attempts} tries.")
+        exit(1)
     except subprocess.CalledProcessError as e:
         print(f"Command '{e.cmd}' returned non-zero exit status {e.returncode}.")
         print(f"Error output: {e.stderr}")
-        exit(-1)
+        exit(1)
 
 
 def main():
-    print("Test 1 - Latency Measurement")
+    print("Test 1 - Throughput Measurement")
 
     print("Performing initial cleanup")
     delete_all_apps()
@@ -191,9 +194,9 @@ def main():
 
     if ENABLE_EBPF:
         print("Enable ebpf proxy")
-        enableEbpfProxy()
+        enable_ebpf_proxy()
 
-    print("Registration of the Iperf Application")
+    print("Registration of the Application")
     appid, microservices = register_app()
     if appid == "":
         print("App registration failed")
@@ -206,7 +209,6 @@ def main():
 
     scale_up_service(1, microservices[0])
     scale_up_service(1, microservices[1])
-
     time.sleep(15)
 
     print("Check deployment status")
@@ -226,7 +228,9 @@ def main():
         succeeded, returntext = check_deployment(microservices)
 
     print("Waiting for test results.")
-    time.sleep(10)  # wait at least 10 seconds more such that the iperf test is done for sure
+    time.sleep(TEST_LENGTH)
+    res = get_results()
+    print(res)
 
 
 if __name__ == '__main__':

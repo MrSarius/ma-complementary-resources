@@ -3,10 +3,10 @@
   "customerID": "Admin",
   "applications": [
     {
-      "applicationID" : "",
-      "application_name" : "test1",
-      "application_namespace" : "test",
-      "application_desc" : "",
+      "applicationID": "",
+      "application_name": "test1",
+      "application_namespace": "test",
+      "application_desc": "",
       "microservices": [
         {
           "microservice_name": "server",
@@ -20,7 +20,7 @@
           "bandwidth_in": 0,
           "bandwidth_out": 0,
           "storage": 0,
-          "code": "docker.io/mrsarius/test1-server:latest",
+          "code": "docker.io/mrsarius/testing:latest",
           "state": "",
           "port": "",
           "addresses": {
@@ -29,7 +29,15 @@
           "added_files": [],
           "constraints": [],
           "connectivity": [],
-          "cmd": [],
+          "cmd": [
+            "iperf3",
+            "-s",
+            "-B",
+            "0.0.0.0",
+            "-V",
+            "-i",
+            "1"
+          ],
           "environment": []
         },
         {
@@ -44,14 +52,18 @@
           "bandwidth_in": 0,
           "bandwidth_out": 0,
           "storage": 0,
-          "code": "docker.io/mrsarius/test1-client:latest",
+          "code": "docker.io/mrsarius/testing:latest",
           "state": "",
           "port": "",
           "added_files": [],
           "constraints": [],
           "connectivity": [],
-          "cmd": [],
-          "environment": ["TARGET_IP=10.30.0.1", "ITERATIONS=1"]
+          "cmd": [
+            "sh",
+            "-c",
+            "hping3 -S 10.30.0.1 -p 5201 -c 15 -i u1000 -q -V > results.json; echo done >> results.json; tail -f /dev/null"
+          ],
+          "environment": []
         }
       ]
     }
