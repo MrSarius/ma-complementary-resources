@@ -3,23 +3,12 @@ import sys
 import json
 import requests
 import random
-import socket
-import signal
 import subprocess
 
-hostname = socket.gethostname()
-IPAddr = socket.gethostbyname(hostname)
-
-SYSTEM_MANAGER_HOST = "0.0.0.0"
-SYSTEM_MANAGER_PORT = "10000"
-NET_MANAGER_PORT = "6000"
-SYSTEM_MANAGER_URL = f"{SYSTEM_MANAGER_HOST}:{SYSTEM_MANAGER_PORT}"
-NET_MANAGER_URL = f"{SYSTEM_MANAGER_HOST}:{NET_MANAGER_PORT}"
-SLA_FILE = "test-throughput.json"
-ENABLE_EBPF = False
-TEST_LENGTH = 20  # in seconds
-
-deployment_descriptor = json.load(open(SLA_FILE))
+def clean(system_manager_url, net_mananger_url):
+    delete_all_apps(system_manager_url)
+    delete_all_ebpf_modules(net_mananger_url)
+    time.sleep(5)
 
 
 def get_random_string(length):
@@ -28,8 +17,8 @@ def get_random_string(length):
     return result_str
 
 
-def getlogin():
-    url = "http://" + SYSTEM_MANAGER_URL + "/api/auth/login"
+def getlogin(system_manager_url: str):
+    url = "http://" + system_manager_url + "/api/auth/login"
     credentials = {
         "username": "Admin",
         "password": "Admin"
@@ -38,12 +27,12 @@ def getlogin():
     return r.json()["token"]
 
 
-def register_app():
-    token = getlogin()
+def register_app(system_manager_url: str, deployment_descriptor):
+    token = getlogin(system_manager_url)
 
     # print(deployment_descriptor)
     head = {'Authorization': "Bearer " + token}
-    url = "http://" + SYSTEM_MANAGER_URL + "/api/application"
+    url = "http://" + system_manager_url + "/api/application"
     deployment_descriptor["applications"][0]["application_namespace"] = get_random_string(5)
     resp = requests.post(url, headers=head, json=deployment_descriptor)
 
@@ -58,46 +47,46 @@ def register_app():
     return "", []
 
 
-def undeploy_all(app_id):
+def undeploy_all(app_id, system_manager_url: str):
     print("\t Asking Undeployment")
-    token = getlogin()
-    url = "http://" + SYSTEM_MANAGER_URL + "/api/application/" + str(app_id)
+    token = getlogin(system_manager_url)
+    url = "http://" + system_manager_url + "/api/application/" + str(app_id)
     resp = requests.delete(url, headers={'Authorization': 'Bearer {}'.format(token)})
     time.sleep(10)
     pass
 
 
-def scale_up_service(amount, microserviceid):
+def scale_up_service(amount, microserviceid, system_manager_url):
     print("\t Asking scaleup of n.", amount, " insances of ", microserviceid)
-    token = getlogin()
+    token = getlogin(system_manager_url)
     for i in range(int(amount)):
-        url = "http://" + SYSTEM_MANAGER_URL + "/api/service/" + microserviceid + "/instance"
+        url = "http://" + system_manager_url + "/api/service/" + microserviceid + "/instance"
         resp = requests.post(url, headers={'Authorization': 'Bearer {}'.format(token)})
         time.sleep(1)
     pass
 
 
-def delete_all_apps():
-    token = getlogin()
-    url = "http://" + SYSTEM_MANAGER_URL + "/api/services"
+def delete_all_apps(system_manager_url: str):
+    token = getlogin(system_manager_url)
+    url = "http://" + system_manager_url + "/api/services"
     resp = requests.get(url, headers={'Authorization': 'Bearer {}'.format(token)})
     if resp.status_code == 200:
         json_resp = json.loads(resp.json())
         print(json_resp)
         for app in json_resp:
-            url = "http://" + SYSTEM_MANAGER_URL + "/api/application/" + app.get("applicationID")
+            url = "http://" + system_manager_url + "/api/application/" + app.get("applicationID")
             r = requests.delete(url, headers={'Authorization': 'Bearer {}'.format(token)})
             print(r)
             print("Waiting undeployment cooldown")
             time.sleep(2)
 
 
-def check_deployment(microservices):
-    token = getlogin()
+def check_deployment(microservices, system_manager_url: str):
+    token = getlogin(system_manager_url)
     head = {'Authorization': 'Bearer {}'.format(token)}
     clientip = "0.0.0.0"
     for microservice in microservices:
-        url = "http://" + SYSTEM_MANAGER_URL + "/api/service/" + microservice
+        url = "http://" + system_manager_url + "/api/service/" + microservice
         resp = requests.get(url, headers={'Authorization': 'Bearer {}'.format(token)})
         if resp.status_code == 200:
             json_resp = json.loads(resp.json())
@@ -116,16 +105,8 @@ def check_deployment(microservices):
     return True, clientip
 
 
-def signal_handler(sig, frame):
-    print('Cleanup process started')
-    delete_all_apps()
-    delete_all_ebpf_modules()
-    print('Cleanup completed!')
-    sys.exit(0)
-
-
-def delete_all_ebpf_modules():
-    url = "http://" + NET_MANAGER_URL + "/ebpf"
+def delete_all_ebpf_modules(net_manager_url):
+    url = "http://" + net_manager_url + "/ebpf"
 
     payload = {}
     headers = {}
@@ -138,8 +119,8 @@ def delete_all_ebpf_modules():
     return True
 
 
-def enable_ebpf_proxy() -> bool:
-    url = "http://" + NET_MANAGER_URL + "/ebpf"
+def enable_ebpf_proxy(net_manager_url: str) -> bool:
+    url = "http://" + net_manager_url + "/ebpf"
     payload = json.dumps({
         "name": "proxy",
         "config": {}
@@ -155,7 +136,7 @@ def enable_ebpf_proxy() -> bool:
     return True
 
 
-def get_results():
+def get_results(deployment_descriptor):
     max_attempts = 3
     namespace = deployment_descriptor["applications"][0]["application_namespace"]
     command = f"sudo ctr -n oakestra task exec --exec-id exec-1 test1.{namespace}.client.test.instance.0 cat results.json"
@@ -172,7 +153,7 @@ def get_results():
 
             data: str = result.stdout
             lines = data.splitlines()
-            if lines[-1] == "done":
+            if len(lines) > 0 and lines[-1] == "done":
                 return "\n".join(lines[:-1])
 
             time.sleep(10)
@@ -182,51 +163,3 @@ def get_results():
         print(f"Command '{e.cmd}' returned non-zero exit status {e.returncode}.")
         print(f"Error output: {e.stderr}")
         exit(1)
-
-
-def test_throughput():
-    print("Test - Throughput Measurement")
-
-    print("Performing initial cleanup")
-    delete_all_apps()
-    delete_all_ebpf_modules()
-    time.sleep(5)
-
-    if ENABLE_EBPF:
-        print("Enable ebpf proxy")
-        enable_ebpf_proxy()
-
-    print("Registration of the Application")
-    appid, microservices = register_app()
-    if appid == "":
-        print("App registration failed")
-        print("Forcing undeployment. Please wait for the cleanup to finish")
-        undeploy_all(appid)
-        time.sleep(20)
-        print("You may now fix your infrastructure and re-try the test")
-        exit(1)
-    signal.signal(signal.SIGINT, signal_handler)
-
-    scale_up_service(1, microservices[0])
-    scale_up_service(1, microservices[1])
-    time.sleep(15)
-
-    print("Check deployment status")
-    succeeded, returntext = check_deployment(microservices)
-    attempt = 1
-    while not succeeded:
-        if attempt > 3:
-            print("Deployment failed with error: ", returntext)
-            print("Forcing undeployment. Please wait for the cleanup to finish")
-            delete_all_apps()
-            time.sleep(60)
-            print("You may now fix your infrastructure and re-try the test")
-            exit(1)
-        attempt += 1
-        print("Deployment not finished yet")
-        time.sleep(10)
-        succeeded, returntext = check_deployment(microservices)
-
-    print("Waiting for test results.")
-    time.sleep(TEST_LENGTH)
-    return get_results()
