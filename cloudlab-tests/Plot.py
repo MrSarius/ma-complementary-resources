@@ -1,12 +1,20 @@
-import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
-from typing import List
 
-def plot_throughput(data: List[List[float]]):
+from Parser import load_samples_file
+
+latency_samples = load_samples_file("latency")
+throughput_samples = load_samples_file("throughput")
+jitter_samples = load_samples_file("jitter")
+
+latency_samples_ebpf = load_samples_file("latency_ebpf")
+throughput_samples_ebpf = load_samples_file("throughput_ebpf")
+jitter_samples_ebpf = load_samples_file("jitter_ebpf")
+
+def plot_throughput():
     # Convert data to a DataFrame
-    df = pd.DataFrame(data)
+    df = pd.DataFrame(throughput_samples)
     df = df.melt(var_name='Second', value_name='Throughput')
     df['Second'] = df['Second'].astype(int)
 
@@ -28,11 +36,11 @@ def plot_throughput(data: List[List[float]]):
     plt.legend()
 
     # Show the plot
-    plt.show()
+    plt.savefig("plots/throughput.pdf")
 
-def plot_throughput_ebpf(data: List[List[float]]):
+def plot_throughput_ebpf():
     # Convert data to a DataFrame
-    df = pd.DataFrame(data)
+    df = pd.DataFrame(throughput_samples_ebpf)
     df = df.melt(var_name='Second', value_name='Throughput')
     df['Second'] = df['Second'].astype(int)
 
@@ -54,11 +62,11 @@ def plot_throughput_ebpf(data: List[List[float]]):
     plt.legend()
 
     # Show the plot
-    plt.show()
+    plt.savefig("plots/throughput_ebpf.pdf")
 
-def plot_throughput_compare(data1: List[List[float]], data2: List[List[float]]):
-    df1 = pd.DataFrame(data1)
-    df2 = pd.DataFrame(data2)
+def plot_throughput_compare():
+    df1 = pd.DataFrame(throughput_samples)
+    df2 = pd.DataFrame(throughput_samples_ebpf)
 
     # Melt the DataFrames
     df1 = df1.melt(var_name='Second', value_name='Throughput')
@@ -90,4 +98,12 @@ def plot_throughput_compare(data1: List[List[float]], data2: List[List[float]]):
     plt.legend(title='Dataset')
 
     # Show the plot
-    plt.show()
+    plt.savefig("plots/throughput_compare.pdf")
+
+def main():
+    plot_throughput()
+    # plot_throughput_ebpf()
+    # plot_throughput_compare()
+
+if __name__ == '__main__':
+    main()

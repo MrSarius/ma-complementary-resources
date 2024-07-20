@@ -3,45 +3,6 @@ from typing import List
 import json
 import os
 
-latency_samples = []
-throughput_samples = []
-jitter_samples = []
-
-latency_samples_ebpf = []
-throughput_samples_ebpf = []
-jitter_samples_ebpf = []
-
-# def load_from_files():
-#     for root, dirs, files in os.walk("raw_data"):
-#         for file in files:
-#             file_path = os.path.join(root, file)
-#             with open(file_path, 'r') as f:
-#                 if file == "jitter.txt":
-#                     raw = json.load(f)
-#                     global jitter_samples
-#                     jitter_samples = list(map(lambda s: parse_jitter_sample(s), raw))
-#                 elif file == "latency.txt":
-#                     raw = json.load(f)
-#                     global jitter_samples
-#                     jitter_samples = list(map(lambda s: parse_jitter_sample(s), raw))
-#                 elif file == "throughput.txt":
-#                     raw = json.load(f)
-#                     global jitter_samples
-#                     jitter_samples = list(map(lambda s: parse_jitter_sample(s), raw))
-#                 elif file == "jitter_ebpf.txt":
-#                     raw = json.load(f)
-#                     global jitter_samples
-#                     jitter_samples = list(map(lambda s: parse_jitter_sample(s), raw))
-#                 elif file == "latency_ebpf.txt":
-#                     raw = json.load(f)
-#                     global jitter_samples
-#                     jitter_samples = list(map(lambda s: parse_jitter_sample(s), raw))
-#                 elif file == "throughput_ebpf.txt":
-#                     raw = json.load(f)
-#                     global jitter_samples
-#                     jitter_samples = list(map(lambda s: parse_jitter_sample(s), raw))
-
-
 
 def parse_latency_sample(sample: str) -> List[float]:
     return re.findall(r'rtt=(\d+\.\d+) ms', sample)
@@ -61,3 +22,16 @@ def parse_throughput_sample(sample: str):
                 interval_throughputs.append(float(throughput))
 
     return interval_throughputs
+
+def save_samples_file(samples, file_name: str):
+    with open(f"raw_data/{file_name}.txt", "w") as file:
+        json.dump(samples, file)
+
+def load_samples_file(file_name: str) -> []:
+    path = f"raw_data/{file_name}.txt"
+
+    if not os.path.exists(path):
+        return []
+
+    with open(path, "r") as file:
+        return json.load(file)
