@@ -5,7 +5,7 @@ import signal
 import socket
 
 from Common import (enable_ebpf_proxy, register_app, scale_up_service, check_deployment, get_results, clean)
-from Parser import parse_latency_sample, parse_jitter_sample, parse_throughput_sample, save_samples_file
+from Parser import parse_latency_sample, parse_jitter_sample, parse_throughput_samples, save_samples_file
 
 hostname = socket.gethostname()
 IPAddr = socket.gethostbyname(hostname)
@@ -152,15 +152,6 @@ def test_throughput(enable_ebpf: bool):
 
 
 def main():
-    # raw_latency_samples = []
-    # raw_throughput_samples = []
-    # raw_jitter_samples = []
-    #
-    # raw_latency_samples_ebpf = []
-    # raw_throughput_samples_ebpf = []
-    # raw_jitter_samples_ebpf = []
-
-
     latency_samples = []
     throughput_samples = []
     jitter_samples = []
@@ -171,48 +162,42 @@ def main():
 
     # TODO ben continue until std deviation threshhold is reached
     # Tests with ebpf disabled
-    while len(latency_samples) < 5:
-        raw = test_latency(enable_ebpf=False)
-        # raw_latency_samples.append(raw)
-        latency_samples.append(parse_latency_sample(raw))
+    # while len(latency_samples) < 5:
+    #     raw = test_latency(enable_ebpf=False)
+    #     # raw_latency_samples.append(raw)
+    #     latency_samples.append(parse_latency_sample(raw))
 
-    save_samples_file(latency_samples, "latency")
+    # save_samples_file(latency_samples, "latency")
 
-    while len(throughput_samples) < 5:
-        raw = test_throughput(enable_ebpf=False)
-        # raw_throughput_samples.append(raw)
-        throughput_samples.append(parse_throughput_sample(raw))
+    while len(throughput_samples) < 3:
+        throughput_samples.append(test_throughput(enable_ebpf=False))
+    parse_throughput_samples(throughput_samples, "throughput")
 
-    save_samples_file(throughput_samples, "throughput")
+    # while len(jitter_samples) < 5:
+    #     raw = test_jitter(enable_ebpf=False)
+    #     # raw_jitter_samples.append(raw)
+    #     jitter_samples.append(parse_jitter_sample(raw))
+    #
+    # save_samples_file(jitter_samples, "jitter")
 
-    while len(jitter_samples) < 5:
-        raw = test_jitter(enable_ebpf=False)
-        # raw_jitter_samples.append(raw)
-        jitter_samples.append(parse_jitter_sample(raw))
+    # # Tests with ebpf enabled
+    # while len(latency_samples_ebpf) < 5:
+    #     raw = test_latency(enable_ebpf=True)
+    #     # raw_latency_samples_ebpf.append(raw)
+    #     latency_samples_ebpf.append(parse_latency_sample(raw))
+    #
+    # save_samples_file(latency_samples_ebpf, "latency_ebpf")
 
-    save_samples_file(jitter_samples, "jitter")
+    # while len(jitter_samples_ebpf) < 5:
+    #     raw = test_jitter(enable_ebpf=True)
+    #     # raw_jitter_samples_ebpf.append(raw)
+    #     jitter_samples_ebpf.append(parse_jitter_sample(raw))
+    #
+    # save_samples_file(jitter_samples_ebpf, "jitter_ebpf")
 
-    # Tests with ebpf enabled
-    while len(latency_samples_ebpf) < 5:
-        raw = test_latency(enable_ebpf=True)
-        # raw_latency_samples_ebpf.append(raw)
-        latency_samples_ebpf.append(parse_latency_sample(raw))
-
-    save_samples_file(latency_samples_ebpf, "latency_ebpf")
-
-    while len(throughput_samples_ebpf) < 5:
-        raw = test_throughput(enable_ebpf=True)
-        # raw_throughput_samples_ebpf.append(raw)
-        throughput_samples_ebpf.append(parse_throughput_sample(raw))
-
-    save_samples_file(throughput_samples_ebpf, "throughput_ebpf")
-
-    while len(jitter_samples_ebpf) < 5:
-        raw = test_jitter(enable_ebpf=True)
-        # raw_jitter_samples_ebpf.append(raw)
-        jitter_samples_ebpf.append(parse_jitter_sample(raw))
-
-    save_samples_file(jitter_samples_ebpf, "jitter_ebpf")
+    while len(throughput_samples_ebpf) < 3:
+        throughput_samples_ebpf.append(test_throughput(enable_ebpf=True))
+    parse_throughput_samples(throughput_samples_ebpf, "throughput_ebpf")
 
 if __name__ == '__main__':
     main()

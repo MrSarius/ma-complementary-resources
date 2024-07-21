@@ -1,8 +1,9 @@
+import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-from Parser import load_samples_file
+from Parser import BASE_PATH, load_samples_file
 
 latency_samples = load_samples_file("latency")
 throughput_samples = load_samples_file("throughput")
@@ -13,97 +14,97 @@ throughput_samples_ebpf = load_samples_file("throughput_ebpf")
 jitter_samples_ebpf = load_samples_file("jitter_ebpf")
 
 def plot_throughput():
-    # Convert data to a DataFrame
-    df = pd.DataFrame(throughput_samples)
-    df = df.melt(var_name='Second', value_name='Throughput')
-    df['Second'] = df['Second'].astype(int)
+    df = pd.read_csv(f'{BASE_PATH}/throughput.csv')
+    df = pd.melt(df, id_vars=['Seconds'], var_name='Measurement', value_name='Throughput')
+    df['Throughput'] = df['Throughput'] / 1e9 # bit/s to Gbit/s
 
-    # Calculate the mean and standard deviation for each second
-    throughput_stats = df.groupby('Second')['Throughput'].agg(['mean', 'std']).reset_index()
+    plt.figure(figsize=(12, 6))
+    sns.lineplot(x='Seconds', y='Throughput', data=df, errorbar='sd')
+    plt.title('Throughput of Original Proxy')
+    plt.xlabel('Seconds')
+    plt.ylabel('Throughput (Gbit/s)')
 
-    # Plotting the data using seaborn
-    plt.figure(figsize=(10, 6))
-    sns.lineplot(x='Second', y='mean', data=throughput_stats, marker='o', label='Mean Throughput')
-    plt.fill_between(throughput_stats['Second'],
-                     throughput_stats['mean'] - throughput_stats['std'],
-                     throughput_stats['mean'] + throughput_stats['std'],
-                     alpha=0.2, label='Standard Deviation')
-
-    # Set plot labels and title
-    plt.xlabel('Time (seconds)')
-    plt.ylabel('Throughput')
-    plt.title('Throughput Time Series with Error Bands')
-    plt.legend()
-
-    # Show the plot
     plt.savefig("plots/throughput.pdf")
 
 def plot_throughput_ebpf():
-    # Convert data to a DataFrame
-    df = pd.DataFrame(throughput_samples_ebpf)
-    df = df.melt(var_name='Second', value_name='Throughput')
-    df['Second'] = df['Second'].astype(int)
+    df = pd.read_csv(f'{BASE_PATH}/throughput_ebpf.csv')
+    df = pd.melt(df, id_vars=['Seconds'], var_name='Measurement', value_name='Throughput')
+    df['Throughput'] = df['Throughput'] / 1e9  # bit/s to Gbit/s
 
-    # Calculate the mean and standard deviation for each second
-    throughput_stats = df.groupby('Second')['Throughput'].agg(['mean', 'std']).reset_index()
+    plt.figure(figsize=(12, 6))
+    sns.lineplot(x='Seconds', y='Throughput', data=df, errorbar='sd', color='orange')
+    plt.title('Throughput of eBPF Proxy')
+    plt.xlabel('Seconds')
+    plt.ylabel('Throughput (Gbit/s)')
 
-    # Plotting the data using seaborn
-    plt.figure(figsize=(10, 6))
-    sns.lineplot(x='Second', y='mean', data=throughput_stats, marker='o', label='Mean Throughput')
-    plt.fill_between(throughput_stats['Second'],
-                     throughput_stats['mean'] - throughput_stats['std'],
-                     throughput_stats['mean'] + throughput_stats['std'],
-                     alpha=0.2, label='Standard Deviation')
-
-    # Set plot labels and title
-    plt.xlabel('Time (seconds)')
-    plt.ylabel('Throughput')
-    plt.title('Throughput Over Time (ebpf enabled)')
-    plt.legend()
-
-    # Show the plot
     plt.savefig("plots/throughput_ebpf.pdf")
 
 def plot_throughput_compare():
-    df1 = pd.DataFrame(throughput_samples)
-    df2 = pd.DataFrame(throughput_samples_ebpf)
+    df = pd.read_csv(f'{BASE_PATH}/throughput.csv')
+    df = pd.melt(df, id_vars=['Seconds'], var_name='Measurement', value_name='Throughput')
+    df['Throughput'] = df['Throughput'] / 1e9  # bit/s to Gbit/s
+    df['Group'] = 'Throughput'
 
-    # Melt the DataFrames
-    df1 = df1.melt(var_name='Second', value_name='Throughput')
-    df1['Second'] = df1['Second'].astype(int)
-    df1['Dataset'] = 'Dataset 1'
+    # Load and reshape the second dataframe
+    df_ebpf = pd.read_csv(f'{BASE_PATH}/throughput_ebpf.csv')
+    df_ebpf = pd.melt(df_ebpf, id_vars=['Seconds'], var_name='Measurement', value_name='Throughput')
+    df_ebpf['Throughput'] = df_ebpf['Throughput'] / 1e9  # bit/s to Gbit/s
+    df_ebpf['Group'] = 'Throughput eBPF'
 
-    df2 = df2.melt(var_name='Second', value_name='Throughput')
-    df2['Second'] = df2['Second'].astype(int)
-    df2['Dataset'] = 'Dataset 2'
+    # Combine the dataframes
+    df_combined = pd.concat([df, df_ebpf], ignore_index=True)
 
-    # Combine both DataFrames
-    df_combined = pd.concat([df1, df2])
+    # Plot the combined dataframe
+    plt.figure(figsize=(12, 6))
+    sns.lineplot(x='Seconds', y='Throughput', hue='Group', data=df_combined, errorbar='sd')
+    plt.title('Throughput Comparison of Original Proxy and eBPF Proxy')
+    plt.xlabel('Seconds')
+    plt.ylabel('Throughput (bits/s)')
+    plt.legend()
 
-    # Calculate the mean and standard deviation for each second and dataset
-    throughput_stats = df_combined.groupby(['Dataset', 'Second'])['Throughput'].agg(['mean', 'std']).reset_index()
+    plt.savefig("plots/throughput_compare.pdf")
 
-    # Plotting the data using seaborn
-    plt.figure(figsize=(10, 6))
-    sns.lineplot(x='Second', y='mean', hue='Dataset', data=throughput_stats, marker='o')
+def plot_jitter_cdf():
+    jitter_results_sorted = np.sort(jitter_samples)
 
-    for dataset in throughput_stats['Dataset'].unique():
-        subset = throughput_stats[throughput_stats['Dataset'] == dataset]
-        plt.fill_between(subset['Second'], subset['mean'] - subset['std'], subset['mean'] + subset['std'], alpha=0.2)
+    # Calculate the CDF values
+    cdf = np.arange(1, len(jitter_results_sorted) + 1) / len(jitter_results_sorted)
+
+    # Plot the CDF
+    plt.figure(figsize=(8, 6))
+    plt.plot(jitter_results_sorted, cdf, marker='o', linestyle='-', color='b')
 
     # Set plot labels and title
-    plt.xlabel('Time (seconds)')
-    plt.ylabel('Throughput')
-    plt.title('Throughput Time Series with Error Bands')
-    plt.legend(title='Dataset')
+    plt.xlabel('Jitter (ms)')
+    plt.ylabel('CDF')
+    plt.title('Cumulative Distribution Function (CDF) of Jitter Results')
 
-    # Show the plot
-    plt.savefig("plots/throughput_compare.pdf")
+    # Save the plot to a file
+    plt.savefig('plots/jitter_cdf.pdf')
+
+def plot_jitter_box():
+    data = jitter_samples + jitter_samples_ebpf
+    labels = ['Set 1'] * len(jitter_samples) + ['Set 2'] * len(jitter_samples_ebpf)
+
+    # Create a DataFrame
+    df = pd.DataFrame({'Jitter': data, 'Set': labels})
+
+    # Create a box plot
+    plt.figure(figsize=(10, 6))
+    sns.boxplot(x='Set', y='Jitter', data=df)
+
+    # Set plot labels and title
+    plt.xlabel('Data Set')
+    plt.ylabel('Jitter (ms)')
+    plt.title('Box Plot of Jitter Results')
+
+    # Save the plot to a file
+    plt.savefig('plots/jitter_boxplot_comparison.pdf')
 
 def main():
     plot_throughput()
-    # plot_throughput_ebpf()
-    # plot_throughput_compare()
+    plot_throughput_ebpf()
+    plot_throughput_compare()
 
 if __name__ == '__main__':
     main()

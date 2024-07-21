@@ -1,6 +1,7 @@
 import time
-import sys
 import json
+from importlib.metadata import files
+
 import requests
 import random
 import subprocess
@@ -154,7 +155,10 @@ def get_results(deployment_descriptor):
             data: str = result.stdout
             lines = data.splitlines()
             if len(lines) > 0 and lines[-1] == "done":
-                return "\n".join(lines[:-1])
+                res = "\n".join(lines[:-1])
+                with open("tmp.txt", 'a') as file:
+                    file.write(res)
+                return res
 
             time.sleep(10)
         print(f"Could not retrieve the results within {max_attempts} tries.")
