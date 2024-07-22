@@ -152,7 +152,7 @@ def test_throughput(enable_ebpf: bool):
 
 
 def main():
-    test_repetitions = 5
+    test_repetitions = 10
 
     latency_samples = []
     throughput_samples = []

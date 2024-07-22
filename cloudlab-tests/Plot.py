@@ -49,9 +49,12 @@ def plot_throughput_compare():
     sns.lineplot(x='Seconds', y='Throughput', data=df, errorbar='sd', label='Original Proxy')
     sns.lineplot(x='Seconds', y='Throughput', data=df_ebpf, errorbar='sd', label='eBPF Proxy')
 
+    plt.axhline(21.8, color='r', linestyle='--', label=f'HW Limitation')
+
     plt.title('Throughput Comparison of Original Proxy and eBPF Proxy')
     plt.xlabel('Seconds')
     plt.ylabel('Throughput [Gbit/s]')
+    plt.legend()
 
     plt.savefig(f"{PLOT_BASE_PATH}/throughput_compare.pdf")
 
@@ -67,7 +70,7 @@ def plot_jitter_cdf():
 
     plt.xlabel('Jitter')
     plt.ylabel('CDF')
-    plt.title('Cumulative Distribution Function (CDF) of Jitter')
+    plt.title('Jitter Comparison of Original Proxy and eBPF Proxy')
     plt.legend()
 
     plt.savefig(f"{PLOT_BASE_PATH}/jitter_cdf.pdf")
@@ -94,11 +97,39 @@ def plot_jitter_box():
 
 
 def plot_latency():
-    pass
+    df = pd.read_csv(f'{BASE_PATH}/latency.csv')
+    df = pd.melt(df, id_vars=['Ping_Nr.'], var_name='Measurement', value_name='Latency')
+
+    plt.figure(figsize=(12, 6))
+    sns.lineplot(x='Ping_Nr.', y='Latency', data=df, errorbar='sd', label='Latency')
+
+    mean_latency = df['Latency'].mean()
+    plt.axhline(mean_latency, color='r', linestyle='--', label=f'Overall Mean: {mean_latency:.2f} ms')
+
+    plt.title('Latency of Original Proxy')
+    plt.xlabel('Ping Nr.')
+    plt.ylabel('RTT [ms]')
+    plt.legend()
+
+    plt.savefig(f"{PLOT_BASE_PATH}/latency.pdf")
 
 
 def plot_latency_ebpf():
-    pass
+    df = pd.read_csv(f'{BASE_PATH}/latency_ebpf.csv')
+    df = pd.melt(df, id_vars=['Ping_Nr.'], var_name='Measurement', value_name='Latency')
+
+    plt.figure(figsize=(12, 6))
+    sns.lineplot(x='Ping_Nr.', y='Latency', data=df, errorbar='sd', label='Latency', color='orange')
+
+    mean_latency = df['Latency'].mean()
+    plt.axhline(mean_latency, color='r', linestyle='--', label=f'Mean: {mean_latency:.2f} ms')
+
+    plt.title('Latency of eBPF Proxy')
+    plt.xlabel('Ping Nr.')
+    plt.ylabel('RTT [ms]')
+    plt.legend()
+
+    plt.savefig(f"{PLOT_BASE_PATH}/latency_ebpf.pdf")
 
 
 def main():
@@ -108,6 +139,9 @@ def main():
 
     plot_jitter_box()
     plot_jitter_cdf()
+
+    plot_latency()
+    plot_latency_ebpf()
 
 
 if __name__ == '__main__':
