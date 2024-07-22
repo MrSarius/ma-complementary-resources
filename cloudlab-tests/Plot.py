@@ -3,28 +3,24 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-from Parser import BASE_PATH, load_samples_file
+from Parser import BASE_PATH
 
-latency_samples = load_samples_file("latency")
-throughput_samples = load_samples_file("throughput")
-jitter_samples = load_samples_file("jitter")
+PLOT_BASE_PATH = "plots"
 
-latency_samples_ebpf = load_samples_file("latency_ebpf")
-throughput_samples_ebpf = load_samples_file("throughput_ebpf")
-jitter_samples_ebpf = load_samples_file("jitter_ebpf")
 
 def plot_throughput():
     df = pd.read_csv(f'{BASE_PATH}/throughput.csv')
     df = pd.melt(df, id_vars=['Seconds'], var_name='Measurement', value_name='Throughput')
-    df['Throughput'] = df['Throughput'] / 1e9 # bit/s to Gbit/s
+    df['Throughput'] = df['Throughput'] / 1e9  # bit/s to Gbit/s
 
     plt.figure(figsize=(12, 6))
     sns.lineplot(x='Seconds', y='Throughput', data=df, errorbar='sd')
     plt.title('Throughput of Original Proxy')
     plt.xlabel('Seconds')
-    plt.ylabel('Throughput (Gbit/s)')
+    plt.ylabel('Throughput [Gbit/s]')
 
-    plt.savefig("plots/throughput.pdf")
+    plt.savefig(f"{PLOT_BASE_PATH}/throughput.pdf")
+
 
 def plot_throughput_ebpf():
     df = pd.read_csv(f'{BASE_PATH}/throughput_ebpf.csv')
@@ -35,76 +31,84 @@ def plot_throughput_ebpf():
     sns.lineplot(x='Seconds', y='Throughput', data=df, errorbar='sd', color='orange')
     plt.title('Throughput of eBPF Proxy')
     plt.xlabel('Seconds')
-    plt.ylabel('Throughput (Gbit/s)')
+    plt.ylabel('Throughput [Gbit/s]')
 
-    plt.savefig("plots/throughput_ebpf.pdf")
+    plt.savefig(f"{PLOT_BASE_PATH}/throughput_ebpf.pdf")
+
 
 def plot_throughput_compare():
-    df = pd.read_csv(f'{BASE_PATH}/throughput.csv')
+    df = pd.read_csv(f'{BASE_PATH}/throughput_ebpf.csv')
     df = pd.melt(df, id_vars=['Seconds'], var_name='Measurement', value_name='Throughput')
     df['Throughput'] = df['Throughput'] / 1e9  # bit/s to Gbit/s
-    df['Group'] = 'Throughput'
 
-    # Load and reshape the second dataframe
-    df_ebpf = pd.read_csv(f'{BASE_PATH}/throughput_ebpf.csv')
+    df_ebpf = pd.read_csv(f'{BASE_PATH}/throughput.csv')
     df_ebpf = pd.melt(df_ebpf, id_vars=['Seconds'], var_name='Measurement', value_name='Throughput')
     df_ebpf['Throughput'] = df_ebpf['Throughput'] / 1e9  # bit/s to Gbit/s
-    df_ebpf['Group'] = 'Throughput eBPF'
 
-    # Combine the dataframes
-    df_combined = pd.concat([df, df_ebpf], ignore_index=True)
-
-    # Plot the combined dataframe
     plt.figure(figsize=(12, 6))
-    sns.lineplot(x='Seconds', y='Throughput', hue='Group', data=df_combined, errorbar='sd')
+    sns.lineplot(x='Seconds', y='Throughput', data=df, errorbar='sd', label='Original Proxy')
+    sns.lineplot(x='Seconds', y='Throughput', data=df_ebpf, errorbar='sd', label='eBPF Proxy')
+
     plt.title('Throughput Comparison of Original Proxy and eBPF Proxy')
     plt.xlabel('Seconds')
-    plt.ylabel('Throughput (bits/s)')
-    plt.legend()
+    plt.ylabel('Throughput [Gbit/s]')
 
-    plt.savefig("plots/throughput_compare.pdf")
+    plt.savefig(f"{PLOT_BASE_PATH}/throughput_compare.pdf")
+
 
 def plot_jitter_cdf():
-    jitter_results_sorted = np.sort(jitter_samples)
+    df = pd.read_csv(f'{BASE_PATH}/jitter.csv')
+    df_ebpf = pd.read_csv(f'{BASE_PATH}/jitter_ebpf.csv')
 
-    # Calculate the CDF values
-    cdf = np.arange(1, len(jitter_results_sorted) + 1) / len(jitter_results_sorted)
+    plt.figure(figsize=(10, 6))
 
-    # Plot the CDF
-    plt.figure(figsize=(8, 6))
-    plt.plot(jitter_results_sorted, cdf, marker='o', linestyle='-', color='b')
+    sns.ecdfplot(df['Jitter'], label='Original Proxy')
+    sns.ecdfplot(df_ebpf['Jitter'], label='eBPF Proxy')
 
-    # Set plot labels and title
-    plt.xlabel('Jitter (ms)')
+    plt.xlabel('Jitter')
     plt.ylabel('CDF')
-    plt.title('Cumulative Distribution Function (CDF) of Jitter Results')
+    plt.title('Cumulative Distribution Function (CDF) of Jitter')
+    plt.legend()
 
-    # Save the plot to a file
-    plt.savefig('plots/jitter_cdf.pdf')
+    plt.savefig(f"{PLOT_BASE_PATH}/jitter_cdf.pdf")
+
 
 def plot_jitter_box():
-    data = jitter_samples + jitter_samples_ebpf
-    labels = ['Set 1'] * len(jitter_samples) + ['Set 2'] * len(jitter_samples_ebpf)
+    df = pd.read_csv(f'{BASE_PATH}/jitter.csv')
+    df_ebpf = pd.read_csv(f'{BASE_PATH}/jitter_ebpf.csv')
 
-    # Create a DataFrame
-    df = pd.DataFrame({'Jitter': data, 'Set': labels})
+    df['Dataset'] = 'Original Proxy'
+    df_ebpf['Dataset'] = 'eBPF Proxy'
 
-    # Create a box plot
+    # Combine the DataFrames
+    combined_df = pd.concat([df, df_ebpf])
+
+    # Plot boxplots
     plt.figure(figsize=(10, 6))
-    sns.boxplot(x='Set', y='Jitter', data=df)
+    sns.boxplot(x='Dataset', y='Jitter', data=combined_df, hue="Dataset")
+    plt.title('Jitter Comparison of Original Proxy and eBPF Proxy')
+    plt.xlabel("")
+    plt.ylabel('Jitter [ms]')
 
-    # Set plot labels and title
-    plt.xlabel('Data Set')
-    plt.ylabel('Jitter (ms)')
-    plt.title('Box Plot of Jitter Results')
+    plt.savefig(f"{PLOT_BASE_PATH}/jitter_boxplot.pdf")
 
-    # Save the plot to a file
-    plt.savefig('plots/jitter_boxplot_comparison.pdf')
+
+def plot_latency():
+    pass
+
+
+def plot_latency_ebpf():
+    pass
+
 
 def main():
     plot_throughput()
     plot_throughput_ebpf()
     plot_throughput_compare()
+
+    plot_jitter_box()
+    plot_jitter_cdf()
+
 
 if __name__ == '__main__':
     main()

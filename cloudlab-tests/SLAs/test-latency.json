@@ -61,7 +61,7 @@
           "cmd": [
             "sh",
             "-c",
-            "hping3 -S 10.30.0.1 -p 5201 -c 15 > results.json; echo done >> results.json; tail -f /dev/null"
+            "hping3 -S 10.30.0.1 -p 5201 -c 20 > results.json; echo done >> results.json; tail -f /dev/null"
           ],
           "environment": []
         }
