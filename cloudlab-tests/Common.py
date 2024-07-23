@@ -1,10 +1,13 @@
 import time
 import json
 from importlib.metadata import files
+from subprocess import Popen
 
 import requests
 import random
 import subprocess
+
+CPU_PROCESS = None
 
 def clean(system_manager_url, net_mananger_url):
     delete_all_apps(system_manager_url)
@@ -136,6 +139,23 @@ def enable_ebpf_proxy(net_manager_url: str) -> bool:
 
     return True
 
+def start_collecting_cpu_ram():
+    global CPU_PROCESS
+
+    if not CPU_PROCESS:
+        CPU_PROCESS = subprocess.Popen(['./cpu.sh'])
+
+def stop_collecting_cpu_ram():
+    global CPU_PROCESS
+
+    if CPU_PROCESS is None:
+        return
+
+    CPU_PROCESS.terminate()
+    try:
+        CPU_PROCESS.wait(timeout=5)  # Wait for the process to terminate
+    except subprocess.TimeoutExpired:
+        CPU_PROCESS.kill()
 
 def get_results(deployment_descriptor):
     max_attempts = 3
@@ -156,7 +176,7 @@ def get_results(deployment_descriptor):
             lines = data.splitlines()
             if len(lines) > 0 and lines[-1] == "done":
                 res = "\n".join(lines[:-1])
-                with open("tmp.txt", 'a') as file:
+                with open("../tmp.txt", 'a') as file:
                     file.write(res)
                 return res
 

@@ -1,4 +1,3 @@
-import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -37,11 +36,11 @@ def plot_throughput_ebpf():
 
 
 def plot_throughput_compare():
-    df = pd.read_csv(f'{BASE_PATH}/throughput_ebpf.csv')
+    df = pd.read_csv(f'{BASE_PATH}/throughput.csv')
     df = pd.melt(df, id_vars=['Seconds'], var_name='Measurement', value_name='Throughput')
     df['Throughput'] = df['Throughput'] / 1e9  # bit/s to Gbit/s
 
-    df_ebpf = pd.read_csv(f'{BASE_PATH}/throughput.csv')
+    df_ebpf = pd.read_csv(f'{BASE_PATH}/throughput_ebpf.csv')
     df_ebpf = pd.melt(df_ebpf, id_vars=['Seconds'], var_name='Measurement', value_name='Throughput')
     df_ebpf['Throughput'] = df_ebpf['Throughput'] / 1e9  # bit/s to Gbit/s
 
@@ -104,11 +103,12 @@ def plot_latency():
     sns.lineplot(x='Ping_Nr.', y='Latency', data=df, errorbar='sd', label='Latency')
 
     mean_latency = df['Latency'].mean()
-    plt.axhline(mean_latency, color='r', linestyle='--', label=f'Overall Mean: {mean_latency:.2f} ms')
+    plt.axhline(mean_latency, color='r', linestyle='--', label=f'Mean: {mean_latency:.2f} ms')
 
     plt.title('Latency of Original Proxy')
     plt.xlabel('Ping Nr.')
     plt.ylabel('RTT [ms]')
+    # plt.xlim(left=1)
     plt.legend()
 
     plt.savefig(f"{PLOT_BASE_PATH}/latency.pdf")
