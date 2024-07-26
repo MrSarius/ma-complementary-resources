@@ -61,34 +61,9 @@ def parse_throughput_samples(samples: [], filename: str):
     df.to_csv(f"{BASE_PATH}/{filename}.csv", index=False)
 
 def parse_cpu_ram_samples(samples: [], filename: str):
-    df = pd.read_csv(f'{BASE_PATH}/cpumemoryusage.csv')
-    df['timestamp'] = df['timestamp'].astype('int')
-    df['cpu_usage'] = df['cpu_usage'].str.rstrip('%').astype('float')
-    df['free_ram'] = df['free_ram'].str.rstrip('KiB').astype('int')
-
-    if len(samples) <= 0:
-        print("Error parsing throughput measurement.")
-
     for i in range(len(samples)):
-        lines = samples[i].splitlines()
-        start_t = int(lines[0])
-        end_t = int(lines[1])
-
-        idle_mask = (df['timestamp'] >= start_t - 10 * 1000) & (df['timestamp'] < start_t)
-        idle_df = df.loc[idle_mask, ['timestamp', 'cpu_usage', 'free_ram']]
-        idle_df['status'] = 'idle'
-
-        load_mask = (df['timestamp'] >= start_t) & (df['timestamp'] <= end_t)
-        load_df = df.loc[load_mask, ['timestamp', 'cpu_usage', 'free_ram']]
-        load_df['status'] = 'load'
-
-        cleanup_mask = (df['timestamp'] > end_t) & (df['timestamp'] <= end_t + 10 * 1000)
-        cleanup_df = df.loc[cleanup_mask, ['timestamp', 'cpu_usage', 'free_ram']]
-        cleanup_df['status'] = 'cleanup'
-
-        df = pd.concat([idle_df, load_df, cleanup_df], ignore_index=True)
-        df['measurement'] = i
-
+        samples[i]['measurement'] = i
+    pd.concat(samples, ignore_index=True).to_csv(f"{BASE_PATH}/{filename}.csv", index=False)
 
 
     # df = pd.DataFrame(data)

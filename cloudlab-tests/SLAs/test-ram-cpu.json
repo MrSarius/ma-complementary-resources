@@ -61,7 +61,7 @@
           "cmd": [
             "sh",
             "-c",
-            "echo \"$(($(date +%s%N)/1000000))\" > results.json; iperf3 -c 10.30.0.1 -b 5M -t 3; echo \"$(($(date +%s%N)/1000000))\" >> results.json; echo done >> results.json; tail -f /dev/null"
+            "iperf3 -c 10.30.0.1 -b 5M -t 180; tail -f /dev/null"
           ],
           "environment": []
         }

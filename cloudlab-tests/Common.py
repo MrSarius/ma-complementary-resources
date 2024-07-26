@@ -1,13 +1,14 @@
 import time
 import json
-from importlib.metadata import files
-from subprocess import Popen
-
+import threading
+import psutil
+import pandas as pd
 import requests
 import random
 import subprocess
 
-CPU_PROCESS = None
+from Parser import BASE_PATH
+
 
 def clean(system_manager_url, net_mananger_url):
     delete_all_apps(system_manager_url)
@@ -139,23 +140,61 @@ def enable_ebpf_proxy(net_manager_url: str) -> bool:
 
     return True
 
-def start_collecting_cpu_ram():
-    global CPU_PROCESS
 
-    if not CPU_PROCESS:
-        CPU_PROCESS = subprocess.Popen(['./cpu.sh'])
+class CpuRamCollector:
+    thread = None
+    cpu_ram_info = {
+        "idle": [],
+        "load": [],
+        "cleanup": []
+    }
+    collection_state = "idle"
+    thread_running = False
+    sleep = 0.5
 
-def stop_collecting_cpu_ram():
-    global CPU_PROCESS
+    def set_collection_state(self, state: str):
+        if state == "idle" or state == "load" or state == "cleanup":
+            self.collection_state = state
+        else:
+            print("Error: Invalid State")
 
-    if CPU_PROCESS is None:
-        return
+    def clear_collection(self):
+        self.cpu_ram_info = {
+            "idle": [],
+            "load": [],
+            "cleanup": []
+        }
 
-    CPU_PROCESS.terminate()
-    try:
-        CPU_PROCESS.wait(timeout=5)  # Wait for the process to terminate
-    except subprocess.TimeoutExpired:
-        CPU_PROCESS.kill()
+    def collect_cpu_ram(self):
+        self.clear_collection()
+        while self.thread_running:
+            current_timestamp = int(time.time() * 1000)
+            cpu_usage = psutil.cpu_percent(interval=0)
+            used_ram_kbit = psutil.virtual_memory().used * 8 / 1024
+            self.cpu_ram_info[self.collection_state].append((current_timestamp, cpu_usage, used_ram_kbit))
+            time.sleep(self.sleep)
+
+    def start_collecting_cpu_ram(self):
+        self.thread_running = True
+        self.thread = threading.Thread(target=self.collect_cpu_ram)
+        self.thread.start()
+
+    def stop_collecting_cpu_ram(self):
+        if self.thread is None:
+            return
+
+        self.thread_running = False
+        self.thread.join()
+
+        df_i = pd.DataFrame(self.cpu_ram_info["idle"][-30:], columns=['timestamp', 'cpu_usage', 'used_ram'])
+        df_i['status'] = 'idle'
+        df_l = pd.DataFrame(self.cpu_ram_info["load"], columns=['timestamp', 'cpu_usage', 'used_ram'])
+        df_l['status'] = 'load'
+        df_c = pd.DataFrame(self.cpu_ram_info["cleanup"][:30], columns=['timestamp', 'cpu_usage', 'used_ram'])
+        df_c['status'] = 'cleanup'
+        self.clear_collection()
+        return pd.concat([df_i, df_l, df_c], ignore_index=True)
+
 
 def get_results(deployment_descriptor):
     max_attempts = 3
