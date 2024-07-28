@@ -160,8 +160,6 @@ def plot_latency_cdf():
 
 def plot_cpu():
     df = pd.read_csv(f'{BASE_PATH}/cpu_ram.csv')
-    # df_ebpf = pd.read_csv(f'{BASE_PATH}/cpu_ram_ebpf.csv')
-
     alpha = 0.1  # Transparency level
     ewma_span = 20
 
@@ -192,22 +190,18 @@ def plot_cpu():
     ewma_cpu_usage = df.groupby('relative_time_seconds')['cpu_usage'].mean().ewm(span=ewma_span).mean()
     plt.plot(ewma_cpu_usage.index, ewma_cpu_usage.values, color='black', linewidth=2, label='EWMA CPU Usage')
 
-    # Calculate the average EWMA between second 15 and 30
-    ewma_avg = ewma_cpu_usage[(ewma_cpu_usage.index >= 15) & (ewma_cpu_usage.index <= 30)].mean()
-
-    # Plot the average EWMA as a horizontal red line
-    plt.axhline(y=ewma_avg, color='red', linestyle='--', linewidth=2, label='Average EWMA during load phase')
-
-    # Annotate the average EWMA value on the y-axis
-    plt.annotate(f'{ewma_avg:.2f}%', xy=(0, ewma_avg), xytext=(-10, 0),
+    # Calculate and plot the average CPU usage during the load phase
+    avg_load_cpu_usage = df[df['status'] == 'load']['cpu_usage'].mean()
+    plt.axhline(y=avg_load_cpu_usage, color='red', linestyle='--', linewidth=2, label='Average CPU usage during load phase')
+    plt.annotate(f'{avg_load_cpu_usage:.2f}%', xy=(0, avg_load_cpu_usage), xytext=(-10, 0),
                  textcoords='offset points', va='center', ha='right', color='red', fontsize=12)
 
     # Create custom legend patches
     idle_patch = mpatches.Patch(color='green', alpha=alpha, label='Idle')
     load_patch = mpatches.Patch(color='red', alpha=alpha, label='Load')
-    cleanup_patch = mpatches.Patch(color='blue', alpha=alpha, label='Clean Up')
+    cleanup_patch = mpatches.Patch(color='blue', alpha=alpha, label='Cleanup')
     ewma_line = mpatches.Patch(color='black', label=f'EWMA (α={(1 / (ewma_span + 1)):.2f}) CPU Usage')
-    avg_ewma_line = mpatches.Patch(color='red', linestyle='--', label='Average EWMA during load phase', fill=False)
+    avg_ewma_line = mpatches.Patch(color='red', linestyle='--', label='Average CPU usage during load phase', fill=False)
 
     plt.title('eBPF Proxy: CPU Usage Over Time')
     plt.xlabel('Time [seconds]')
@@ -219,6 +213,7 @@ def plot_cpu():
     plt.ylim(0, 100)
 
     plt.savefig(f"{PLOT_BASE_PATH}/cpu.pdf")
+
 
 def plot_cpu_ebpf():
     df = pd.read_csv(f'{BASE_PATH}/cpu_ram_ebpf.csv')
@@ -253,22 +248,19 @@ def plot_cpu_ebpf():
     ewma_cpu_usage = df.groupby('relative_time_seconds')['cpu_usage'].mean().ewm(span=ewma_span).mean()
     plt.plot(ewma_cpu_usage.index, ewma_cpu_usage.values, color='black', linewidth=2, label='EWMA CPU Usage')
 
-    # Calculate the average EWMA between second 15 and 30
-    ewma_avg = ewma_cpu_usage[(ewma_cpu_usage.index >= 15) & (ewma_cpu_usage.index <= 30)].mean()
-
-    # Plot the average EWMA as a horizontal red line
-    plt.axhline(y=ewma_avg, color='red', linestyle='--', linewidth=2, label='Average EWMA during load phase')
-
-    # Annotate the average EWMA value on the y-axis
-    plt.annotate(f'{ewma_avg:.2f}%', xy=(0, ewma_avg), xytext=(-10, 0),
+    # Calculate and plot the average CPU usage during the load phase
+    avg_load_cpu_usage = df[df['status'] == 'load']['cpu_usage'].mean()
+    plt.axhline(y=avg_load_cpu_usage, color='red', linestyle='--', linewidth=2,
+                label='Average CPU usage during load phase')
+    plt.annotate(f'{avg_load_cpu_usage:.2f}%', xy=(0, avg_load_cpu_usage), xytext=(-10, 0),
                  textcoords='offset points', va='center', ha='right', color='red', fontsize=12)
 
     # Create custom legend patches
     idle_patch = mpatches.Patch(color='green', alpha=alpha, label='Idle')
     load_patch = mpatches.Patch(color='red', alpha=alpha, label='Load')
-    cleanup_patch = mpatches.Patch(color='blue', alpha=alpha, label='Clean Up')
+    cleanup_patch = mpatches.Patch(color='blue', alpha=alpha, label='Cleanup')
     ewma_line = mpatches.Patch(color='black', label=f'EWMA (α={(1 / (ewma_span + 1)):.2f}) CPU Usage')
-    avg_ewma_line = mpatches.Patch(color='red', linestyle='--', label='Average EWMA during load phase', fill=False)
+    avg_ewma_line = mpatches.Patch(color='red', linestyle='--', label='Average CPU usage during load phase', fill=False)
 
     plt.title('eBPF Proxy: CPU Usage Over Time')
     plt.xlabel('Time [seconds]]')
@@ -317,22 +309,19 @@ def plot_ram():
     ewma_ram_usage = df.groupby('relative_time_seconds')['used_ram'].mean().ewm(span=ewma_span).mean()
     plt.plot(ewma_ram_usage.index, ewma_ram_usage.values, color='black', linewidth=2, label='EWMA RAM Usage')
 
-    # Calculate the average EWMA between second 15 and 30
-    ewma_avg = ewma_ram_usage[(ewma_ram_usage.index >= 15) & (ewma_ram_usage.index <= 30)].mean()
-
-    # Plot the average EWMA as a horizontal red line
-    plt.axhline(y=ewma_avg, color='red', linestyle='--', linewidth=2, label='Average EWMA during load phase')
-
-    # Annotate the average EWMA value on the y-axis
-    plt.annotate(f'{ewma_avg:.2f} MB', xy=(0, ewma_avg), xytext=(-10, 0),
+    # Calculate and plot the average RAM usage during the load phase
+    avg_load_ram_usage = df[df['status'] == 'load']['used_ram'].mean()
+    plt.axhline(y=avg_load_ram_usage, color='red', linestyle='--', linewidth=2,
+                label='Average CPU usage during load phase')
+    plt.annotate(f'{avg_load_ram_usage:.2f}MB', xy=(0, avg_load_ram_usage), xytext=(-10, 0),
                  textcoords='offset points', va='center', ha='right', color='red', fontsize=12)
 
     # Create custom legend patches
     idle_patch = mpatches.Patch(color='green', alpha=alpha, label='Idle')
     load_patch = mpatches.Patch(color='red', alpha=alpha, label='Load')
-    cleanup_patch = mpatches.Patch(color='blue', alpha=alpha, label='Clean Up')
+    cleanup_patch = mpatches.Patch(color='blue', alpha=alpha, label='Cleanup')
     ewma_line = mpatches.Patch(color='black', label=f'EWMA (α={(1 / (ewma_span + 1)):.2f}) RAM Usage')
-    avg_ewma_line = mpatches.Patch(color='red', linestyle='--', label='Average EWMA during load phase', fill=False)
+    avg_ewma_line = mpatches.Patch(color='red', linestyle='--', label='Average RAM usage during load phase', fill=False)
 
     plt.title('Original Proxy: RAM Usage Over Time')
     plt.xlabel('Time [seconds]')
@@ -381,22 +370,19 @@ def plot_ram_ebpf():
     ewma_ram_usage = df.groupby('relative_time_seconds')['used_ram'].mean().ewm(span=ewma_span).mean()
     plt.plot(ewma_ram_usage.index, ewma_ram_usage.values, color='black', linewidth=2, label='EWMA RAM Usage')
 
-    # Calculate the average EWMA between second 15 and 30
-    ewma_avg = ewma_ram_usage[(ewma_ram_usage.index >= 15) & (ewma_ram_usage.index <= 30)].mean()
-
-    # Plot the average EWMA as a horizontal red line
-    plt.axhline(y=ewma_avg, color='red', linestyle='--', linewidth=2, label='Average EWMA during load phase')
-
-    # Annotate the average EWMA value on the y-axis
-    plt.annotate(f'{ewma_avg:.2f} MB', xy=(0, ewma_avg), xytext=(-10, 0),
+    # Calculate and plot the average RAM usage during the load phase
+    avg_load_ram_usage = df[df['status'] == 'load']['used_ram'].mean()
+    plt.axhline(y=avg_load_ram_usage, color='red', linestyle='--', linewidth=2,
+                label='Average CPU usage during load phase')
+    plt.annotate(f'{avg_load_ram_usage:.2f}MB', xy=(0, avg_load_ram_usage), xytext=(-10, 0),
                  textcoords='offset points', va='center', ha='right', color='red', fontsize=12)
 
     # Create custom legend patches
     idle_patch = mpatches.Patch(color='green', alpha=alpha, label='Idle')
     load_patch = mpatches.Patch(color='red', alpha=alpha, label='Load')
-    cleanup_patch = mpatches.Patch(color='blue', alpha=alpha, label='Clean Up')
+    cleanup_patch = mpatches.Patch(color='blue', alpha=alpha, label='Cleanup')
     ewma_line = mpatches.Patch(color='black', label=f'EWMA (α={(1 / (ewma_span + 1)):.2f}) RAM Usage')
-    avg_ewma_line = mpatches.Patch(color='red', linestyle='--', label='Average EWMA during load phase', fill=False)
+    avg_ewma_line = mpatches.Patch(color='red', linestyle='--', label='Average RAM usage during load phase', fill=False)
 
     plt.title('eBPF Proxy: RAM Usage Over Time')
     plt.xlabel('Time [seconds]')
