@@ -6,7 +6,7 @@ import socket
 
 from Common import (enable_ebpf_proxy, register_app, scale_up_service, check_deployment, get_results, clean,
                     CpuRamCollector)
-from Parser import parse_cpu_ram_samples
+from Parser import parse_cpu_ram_samples, parse_jitter_samples, parse_latency_samples, parse_throughput_samples
 
 hostname = socket.gethostname()
 IPAddr = socket.gethostbyname(hostname)
@@ -201,7 +201,7 @@ def test_ram_cpu(enable_ebpf: bool):
 
 
 def main():
-    test_repetitions = 20
+    test_repetitions = 30
 
     latency_samples = []
     throughput_samples = []
@@ -213,47 +213,45 @@ def main():
     jitter_samples_ebpf = []
     cpu_ram_samples_ebpf = []
 
-    # TODO ben continue until std deviation threshhold is reached
-    # TODO empty lists after parsed to save memory
-    # Tests with ebpf disabled
-    while len(throughput_samples) < test_repetitions:
-        throughput_samples.append(test_throughput(enable_ebpf=False))
-    parse_throughput_samples(throughput_samples, "throughput")
-    throughput_samples.clear()
+    while len(cpu_ram_samples) < test_repetitions:
+        cpu_ram_samples.append(test_ram_cpu(enable_ebpf=False))
+    parse_cpu_ram_samples(cpu_ram_samples, "cpu_ram")
+    cpu_ram_samples.clear()
 
-    while len(latency_samples) < test_repetitions:
-        latency_samples.append(test_latency(enable_ebpf=False))
-    parse_latency_samples(latency_samples, "latency")
-    latency_samples.clear()
+    while len(cpu_ram_samples_ebpf) < test_repetitions:
+        cpu_ram_samples_ebpf.append(test_ram_cpu(enable_ebpf=True))
+    parse_cpu_ram_samples(cpu_ram_samples_ebpf, "cpu_ram_ebpf")
+    cpu_ram_samples_ebpf.clear()
 
     while len(jitter_samples) < test_repetitions:
         jitter_samples.append(test_jitter(enable_ebpf=False))
     parse_jitter_samples(jitter_samples, "jitter")
     jitter_samples.clear()
 
-    # Tests with ebpf enabled
-    while len(throughput_samples_ebpf) < test_repetitions:
-        throughput_samples_ebpf.append(test_throughput(enable_ebpf=True))
-    parse_throughput_samples(throughput_samples_ebpf, "throughput_ebpf")
-    throughput_samples_ebpf.clear()
-
-    while len(latency_samples_ebpf) < test_repetitions:
-        latency_samples_ebpf.append(test_latency(enable_ebpf=True))
-    parse_latency_samples(latency_samples_ebpf, "latency_ebpf")
-    latency_samples_ebpf.clear()
-
     while len(jitter_samples_ebpf) < test_repetitions:
         jitter_samples_ebpf.append(test_jitter(enable_ebpf=True))
     parse_jitter_samples(jitter_samples_ebpf, "jitter_ebpf")
     jitter_samples_ebpf.clear()
 
-    while len(cpu_ram_samples) < test_repetitions:
-        cpu_ram_samples.append(test_ram_cpu(enable_ebpf=False))
-    parse_cpu_ram_samples(cpu_ram_samples, "cpu_ram")
+    while len(throughput_samples) < test_repetitions:
+        throughput_samples.append(test_throughput(enable_ebpf=False))
+    parse_throughput_samples(throughput_samples, "throughput")
+    throughput_samples.clear()
 
-    while len(cpu_ram_samples_ebpf) < test_repetitions:
-        cpu_ram_samples_ebpf.append(test_ram_cpu(enable_ebpf=True))
-    parse_cpu_ram_samples(cpu_ram_samples_ebpf, "cpu_ram_ebpf")
+    while len(throughput_samples_ebpf) < test_repetitions:
+        throughput_samples_ebpf.append(test_throughput(enable_ebpf=True))
+    parse_throughput_samples(throughput_samples_ebpf, "throughput_ebpf")
+    throughput_samples_ebpf.clear()
+
+    while len(latency_samples) < test_repetitions:
+        latency_samples.append(test_latency(enable_ebpf=False))
+    parse_latency_samples(latency_samples, "latency")
+    latency_samples.clear()
+
+    while len(latency_samples_ebpf) < test_repetitions:
+        latency_samples_ebpf.append(test_latency(enable_ebpf=True))
+    parse_latency_samples(latency_samples_ebpf, "latency_ebpf")
+    latency_samples_ebpf.clear()
 
 
 if __name__ == '__main__':
