@@ -15,12 +15,13 @@ def plot_throughput():
 
     plt.figure(figsize=(12, 6))
     sns.lineplot(x='Seconds', y='Throughput', data=df, errorbar='sd')
-    plt.title('Throughput of Original Proxy')
+    # plt.title('Throughput of Original Proxy')
     plt.xlabel('Seconds')
     plt.ylabel('Throughput [Gbit/s]')
     plt.xlim(left=1, right=20)
+    plt.grid(True, which='both', linestyle='--', linewidth=0.5, alpha=0.7)
 
-    plt.savefig(f"{PLOT_BASE_PATH}/throughput.pdf")
+    plt.savefig(f"{PLOT_BASE_PATH}/throughput.pdf", bbox_inches='tight', pad_inches=0)
 
 
 def plot_throughput_ebpf():
@@ -30,12 +31,13 @@ def plot_throughput_ebpf():
 
     plt.figure(figsize=(12, 6))
     sns.lineplot(x='Seconds', y='Throughput', data=df, errorbar='sd', color='orange')
-    plt.title('Throughput of eBPF Proxy')
+    # plt.title('Throughput of eBPF Proxy')
     plt.xlabel('Seconds')
     plt.ylabel('Throughput [Gbit/s]')
     plt.xlim(left=1, right=20)
+    plt.grid(True, which='both', linestyle='--', linewidth=0.5, alpha=0.7)
 
-    plt.savefig(f"{PLOT_BASE_PATH}/throughput_ebpf.pdf")
+    plt.savefig(f"{PLOT_BASE_PATH}/throughput_ebpf.pdf", bbox_inches='tight', pad_inches=0)
 
 
 def plot_throughput_compare():
@@ -51,15 +53,17 @@ def plot_throughput_compare():
     sns.lineplot(x='Seconds', y='Throughput', data=df, errorbar='sd', label='Original Proxy')
     sns.lineplot(x='Seconds', y='Throughput', data=df_ebpf, errorbar='sd', label='eBPF Proxy')
 
-    plt.axhline(21.8, color='r', linestyle='--', label=f'HW Limitation')
+    hw_limit = 34.2
+    plt.axhline(hw_limit, color='r', linestyle='--', label=f'HW Limitation: {hw_limit}Gbit\s')
 
-    plt.title('Throughput Comparison of Original Proxy and eBPF Proxy')
+    # plt.title('Throughput Comparison of Original Proxy and eBPF Proxy')
     plt.xlabel('Seconds')
     plt.ylabel('Throughput [Gbit/s]')
-    plt.legend()
+    plt.legend(loc='upper right')
     plt.xlim(left=1, right=20)
+    plt.grid(True, which='both', linestyle='--', linewidth=0.5, alpha=0.7)
 
-    plt.savefig(f"{PLOT_BASE_PATH}/throughput_compare.pdf")
+    plt.savefig(f"{PLOT_BASE_PATH}/throughput_compare.pdf", bbox_inches='tight', pad_inches=0)
 
 
 def plot_jitter_cdf():
@@ -73,11 +77,12 @@ def plot_jitter_cdf():
 
     plt.xlabel('Jitter')
     plt.ylabel('CDF')
-    plt.title('Jitter Comparison of Original Proxy and eBPF Proxy')
+    # plt.title('Jitter Comparison of Original Proxy and eBPF Proxy')
     plt.legend()
     plt.xlim(left=0)
+    plt.grid(True, which='both', linestyle='--', linewidth=0.5, alpha=0.7)
 
-    plt.savefig(f"{PLOT_BASE_PATH}/jitter_cdf.pdf")
+    plt.savefig(f"{PLOT_BASE_PATH}/jitter_cdf.pdf", bbox_inches='tight', pad_inches=0)
 
 
 def plot_jitter_box():
@@ -93,11 +98,12 @@ def plot_jitter_box():
     # Plot boxplots
     plt.figure(figsize=(10, 6))
     sns.boxplot(x='Dataset', y='Jitter', data=combined_df, hue="Dataset")
-    plt.title('Jitter Comparison of Original Proxy and eBPF Proxy')
+    # plt.title('Jitter Comparison of Original Proxy and eBPF Proxy')
     plt.xlabel("")
     plt.ylabel('Jitter [ms]')
+    plt.grid(True, which='both', linestyle='--', linewidth=0.5, alpha=0.7)
 
-    plt.savefig(f"{PLOT_BASE_PATH}/jitter_boxplot.pdf")
+    plt.savefig(f"{PLOT_BASE_PATH}/jitter_boxplot.pdf", bbox_inches='tight', pad_inches=0)
 
 
 def plot_latency():
@@ -110,14 +116,15 @@ def plot_latency():
     mean_latency = df['Latency'].mean()
     plt.axhline(mean_latency, color='r', linestyle='--', label=f'Mean: {mean_latency:.2f} ms')
 
-    plt.title('Latency of Original Proxy')
+    # plt.title('Latency of Original Proxy')
     plt.xlabel('Ping Nr.')
     plt.ylabel('RTT [ms]')
     # plt.xlim(left=1)
     plt.legend()
     plt.xlim(left=1, right=15)
+    plt.grid(True, which='both', linestyle='--', linewidth=0.5, alpha=0.7)
 
-    plt.savefig(f"{PLOT_BASE_PATH}/latency.pdf")
+    plt.savefig(f"{PLOT_BASE_PATH}/latency.pdf", bbox_inches='tight', pad_inches=0)
 
 
 def plot_latency_ebpf():
@@ -130,13 +137,14 @@ def plot_latency_ebpf():
     mean_latency = df['Latency'].mean()
     plt.axhline(mean_latency, color='r', linestyle='--', label=f'Mean: {mean_latency:.2f} ms')
 
-    plt.title('Latency of eBPF Proxy')
+    # plt.title('Latency of eBPF Proxy')
     plt.xlabel('Ping Nr.')
     plt.ylabel('RTT [ms]')
     plt.legend()
     plt.xlim(left=1, right=15)
+    plt.grid(True, which='both', linestyle='--', linewidth=0.5, alpha=0.7)
 
-    plt.savefig(f"{PLOT_BASE_PATH}/latency_ebpf.pdf")
+    plt.savefig(f"{PLOT_BASE_PATH}/latency_ebpf.pdf", bbox_inches='tight', pad_inches=0)
 
 
 def plot_latency_cdf():
@@ -152,11 +160,12 @@ def plot_latency_cdf():
     sns.ecdfplot(df_ebpf["Latency"], label='eBPF Proxy')
     plt.xlabel('RTT [ms]')
     plt.ylabel('CDF')
-    plt.title('Latency Comparison of Original Proxy and eBPF Proxy')
+    # plt.title('Latency Comparison of Original Proxy and eBPF Proxy')
     plt.legend()
     plt.xlim(left=0)
+    plt.grid(True, which='both', linestyle='--', linewidth=0.5, alpha=0.7)
 
-    plt.savefig(f"{PLOT_BASE_PATH}/latency_cdf.pdf")
+    plt.savefig(f"{PLOT_BASE_PATH}/latency_cdf.pdf", bbox_inches='tight', pad_inches=0)
 
 def plot_cpu():
     df = pd.read_csv(f'{BASE_PATH}/cpu_ram.csv')
@@ -192,27 +201,25 @@ def plot_cpu():
 
     # Calculate and plot the average CPU usage during the load phase
     avg_load_cpu_usage = df[df['status'] == 'load']['cpu_usage'].mean()
-    plt.axhline(y=avg_load_cpu_usage, color='red', linestyle='--', linewidth=2, label='Average CPU usage during load phase')
-    plt.annotate(f'{avg_load_cpu_usage:.2f}%', xy=(0, avg_load_cpu_usage), xytext=(-10, 0),
-                 textcoords='offset points', va='center', ha='right', color='red', fontsize=12)
+    plt.axhline(y=avg_load_cpu_usage, color='red', linestyle='--', linewidth=2)
 
     # Create custom legend patches
     idle_patch = mpatches.Patch(color='green', alpha=alpha, label='Idle')
     load_patch = mpatches.Patch(color='red', alpha=alpha, label='Load')
     cleanup_patch = mpatches.Patch(color='blue', alpha=alpha, label='Cleanup')
     ewma_line = mpatches.Patch(color='black', label=f'EWMA (α={(1 / (ewma_span + 1)):.2f}) CPU Usage')
-    avg_ewma_line = mpatches.Patch(color='red', linestyle='--', label='Average CPU usage during load phase', fill=False)
+    avg_ewma_line = mpatches.Patch(color='red', linestyle='--', label=f'Average CPU Usage During Load Phase: {avg_load_cpu_usage:.2f}%', fill=False)
 
-    plt.title('eBPF Proxy: CPU Usage Over Time')
+    # plt.title('eBPF Proxy: CPU Usage Over Time')
     plt.xlabel('Time [seconds]')
     plt.ylabel('CPU Usage [%]')
     plt.legend(loc='upper left', handles=[idle_patch, load_patch, cleanup_patch, ewma_line, avg_ewma_line])
 
     # Set xlim to start at 0
     plt.xlim(0, max_time_seconds)
-    plt.ylim(0, 100)
+    plt.ylim(0, 30)
 
-    plt.savefig(f"{PLOT_BASE_PATH}/cpu.pdf")
+    plt.savefig(f"{PLOT_BASE_PATH}/cpu.pdf", bbox_inches='tight', pad_inches=0)
 
 
 def plot_cpu_ebpf():
@@ -250,28 +257,25 @@ def plot_cpu_ebpf():
 
     # Calculate and plot the average CPU usage during the load phase
     avg_load_cpu_usage = df[df['status'] == 'load']['cpu_usage'].mean()
-    plt.axhline(y=avg_load_cpu_usage, color='red', linestyle='--', linewidth=2,
-                label='Average CPU usage during load phase')
-    plt.annotate(f'{avg_load_cpu_usage:.2f}%', xy=(0, avg_load_cpu_usage), xytext=(-10, 0),
-                 textcoords='offset points', va='center', ha='right', color='red', fontsize=12)
+    plt.axhline(y=avg_load_cpu_usage, color='red', linestyle='--', linewidth=2)
 
     # Create custom legend patches
     idle_patch = mpatches.Patch(color='green', alpha=alpha, label='Idle')
     load_patch = mpatches.Patch(color='red', alpha=alpha, label='Load')
     cleanup_patch = mpatches.Patch(color='blue', alpha=alpha, label='Cleanup')
     ewma_line = mpatches.Patch(color='black', label=f'EWMA (α={(1 / (ewma_span + 1)):.2f}) CPU Usage')
-    avg_ewma_line = mpatches.Patch(color='red', linestyle='--', label='Average CPU usage during load phase', fill=False)
+    avg_ewma_line = mpatches.Patch(color='red', linestyle='--', label=f'Average CPU Usage During Load Phase: {avg_load_cpu_usage:.2f}%', fill=False)
 
-    plt.title('eBPF Proxy: CPU Usage Over Time')
+    # plt.title('eBPF Proxy: CPU Usage Over Time')
     plt.xlabel('Time [seconds]]')
     plt.ylabel('CPU Usage [%]')
     plt.legend(loc='upper left', handles=[idle_patch, load_patch, cleanup_patch, ewma_line, avg_ewma_line])
 
     # Set xlim to start at 0
     plt.xlim(0, max_time_seconds)
-    plt.ylim(0, 100)
+    plt.ylim(0, 30)
 
-    plt.savefig(f"{PLOT_BASE_PATH}/cpu_ebpf.pdf")
+    plt.savefig(f"{PLOT_BASE_PATH}/cpu_ebpf.pdf", bbox_inches='tight', pad_inches=0)
 
 def plot_ram():
     df = pd.read_csv(f'{BASE_PATH}/cpu_ram.csv')
@@ -285,8 +289,8 @@ def plot_ram():
     # Convert relative time to seconds
     df['relative_time_seconds'] = df['relative_time'] / 1000
 
-    # Convert used_ram from Kbit to MB
-    df['used_ram'] = df['used_ram'] / 8192
+    # Convert used_ram from Kilobit to Megabyte
+    df['used_ram'] = df['used_ram'] / 8_000
 
     # Determine the maximum relative time in seconds to set the background sections
     max_time_seconds = df['relative_time_seconds'].max()
@@ -311,19 +315,16 @@ def plot_ram():
 
     # Calculate and plot the average RAM usage during the load phase
     avg_load_ram_usage = df[df['status'] == 'load']['used_ram'].mean()
-    plt.axhline(y=avg_load_ram_usage, color='red', linestyle='--', linewidth=2,
-                label='Average CPU usage during load phase')
-    plt.annotate(f'{avg_load_ram_usage:.2f}MB', xy=(0, avg_load_ram_usage), xytext=(-10, 0),
-                 textcoords='offset points', va='center', ha='right', color='red', fontsize=12)
+    plt.axhline(y=avg_load_ram_usage, color='red', linestyle='--', linewidth=2)
 
     # Create custom legend patches
     idle_patch = mpatches.Patch(color='green', alpha=alpha, label='Idle')
     load_patch = mpatches.Patch(color='red', alpha=alpha, label='Load')
     cleanup_patch = mpatches.Patch(color='blue', alpha=alpha, label='Cleanup')
     ewma_line = mpatches.Patch(color='black', label=f'EWMA (α={(1 / (ewma_span + 1)):.2f}) RAM Usage')
-    avg_ewma_line = mpatches.Patch(color='red', linestyle='--', label='Average RAM usage during load phase', fill=False)
+    avg_ewma_line = mpatches.Patch(color='red', linestyle='--', label=f'Average RAM Usage During Load Phase: {avg_load_ram_usage:.2f}MB', fill=False)
 
-    plt.title('Original Proxy: RAM Usage Over Time')
+    # plt.title('Original Proxy: RAM Usage Over Time')
     plt.xlabel('Time [seconds]')
     plt.ylabel('RAM Usage [MB]')
     plt.legend(loc='upper left', handles=[idle_patch, load_patch, cleanup_patch, ewma_line, avg_ewma_line])
@@ -332,7 +333,7 @@ def plot_ram():
     plt.xlim(0, max_time_seconds)
 
     plt.tight_layout()
-    plt.savefig(f"{PLOT_BASE_PATH}/ram.pdf")
+    plt.savefig(f"{PLOT_BASE_PATH}/ram.pdf", bbox_inches='tight', pad_inches=0)
 
 def plot_ram_ebpf():
     df = pd.read_csv(f'{BASE_PATH}/cpu_ram_ebpf.csv')
@@ -346,8 +347,8 @@ def plot_ram_ebpf():
     # Convert relative time to seconds
     df['relative_time_seconds'] = df['relative_time'] / 1000
 
-    # Convert used_ram from Kbit to MB
-    df['used_ram'] = df['used_ram'] / 8192
+    # Convert used_ram from Kilobit to Megabyte
+    df['used_ram'] = df['used_ram'] / 8_000
 
     # Determine the maximum relative time in seconds to set the background sections
     max_time_seconds = df['relative_time_seconds'].max()
@@ -372,19 +373,16 @@ def plot_ram_ebpf():
 
     # Calculate and plot the average RAM usage during the load phase
     avg_load_ram_usage = df[df['status'] == 'load']['used_ram'].mean()
-    plt.axhline(y=avg_load_ram_usage, color='red', linestyle='--', linewidth=2,
-                label='Average CPU usage during load phase')
-    plt.annotate(f'{avg_load_ram_usage:.2f}MB', xy=(0, avg_load_ram_usage), xytext=(-10, 0),
-                 textcoords='offset points', va='center', ha='right', color='red', fontsize=12)
+    plt.axhline(y=avg_load_ram_usage, color='red', linestyle='--', linewidth=2)
 
     # Create custom legend patches
     idle_patch = mpatches.Patch(color='green', alpha=alpha, label='Idle')
     load_patch = mpatches.Patch(color='red', alpha=alpha, label='Load')
     cleanup_patch = mpatches.Patch(color='blue', alpha=alpha, label='Cleanup')
     ewma_line = mpatches.Patch(color='black', label=f'EWMA (α={(1 / (ewma_span + 1)):.2f}) RAM Usage')
-    avg_ewma_line = mpatches.Patch(color='red', linestyle='--', label='Average RAM usage during load phase', fill=False)
+    avg_ewma_line = mpatches.Patch(color='red', linestyle='--', label=f'Average RAM Usage During Load Phase: {avg_load_ram_usage:.2f}MB', fill=False)
 
-    plt.title('eBPF Proxy: RAM Usage Over Time')
+    # plt.title('eBPF Proxy: RAM Usage Over Time')
     plt.xlabel('Time [seconds]')
     plt.ylabel('RAM Usage [MB]')
     plt.legend(loc='upper left', handles=[idle_patch, load_patch, cleanup_patch, ewma_line, avg_ewma_line])
@@ -393,7 +391,7 @@ def plot_ram_ebpf():
     plt.xlim(0, max_time_seconds)
 
     plt.tight_layout()
-    plt.savefig(f"{PLOT_BASE_PATH}/ram_ebpf.pdf")
+    plt.savefig(f"{PLOT_BASE_PATH}/ram_ebpf.pdf", bbox_inches='tight', pad_inches=0)
 
 def main():
     plot_throughput()
