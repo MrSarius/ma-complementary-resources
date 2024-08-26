@@ -149,10 +149,13 @@ def plot_latency_ebpf():
 
 def plot_latency_cdf():
     df = pd.read_csv(f'{BASE_PATH}/latency.csv')
-    df_ebpf = pd.read_csv(f'{BASE_PATH}/latency_ebpf.csv')#
+    df_ebpf = pd.read_csv(f'{BASE_PATH}/latency_ebpf.csv')
 
     df = df.melt(id_vars=["Ping_Nr."], var_name="Measurement", value_name="Latency")
     df_ebpf = df_ebpf.melt(id_vars=["Ping_Nr."], var_name="Measurement", value_name="Latency")
+
+    # original_high_latency_count = df[df['Latency'] > 8].shape[0] / df['Latency'].shape[0]
+    # ebpf_high_latency_count = df_ebpf[df_ebpf['Latency'] > 8].shape[0] / df_ebpf['Latency'].shape[0]
 
     plt.figure(figsize=(10, 6))
 
@@ -161,7 +164,7 @@ def plot_latency_cdf():
     plt.xlabel('RTT [ms]')
     plt.ylabel('CDF')
     # plt.title('Latency Comparison of Original Proxy and eBPF Proxy')
-    plt.legend()
+    plt.legend(loc="upper left")
     plt.xlim(left=0)
     plt.grid(True, which='both', linestyle='--', linewidth=0.5, alpha=0.7)
 
