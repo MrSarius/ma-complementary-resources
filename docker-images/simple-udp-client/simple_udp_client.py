@@ -1,7 +1,7 @@
 import time
 import socket
 
-host = 'localhost'  # Server Service IP address
+host = '10.30.0.1'  # Server Service IP address
 port = 1234  # Port to connect to
 
 
