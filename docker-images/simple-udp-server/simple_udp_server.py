@@ -10,9 +10,8 @@ def start_server():
         s.bind((host, port))
         while True:
             data, addr = s.recvfrom(1024)
-            print("Server recieved ", data.decode())
-            num = int(data.decode())
-            s.sendto(str(num + 1).encode(), addr)
+            print("Server recieved ping")
+            s.sendto("ping".encode(), addr)
 
 
 if __name__ == '__main__':
