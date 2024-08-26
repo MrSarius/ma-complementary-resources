@@ -1,5 +1,4 @@
 import socket
-import time
 
 # Server settings
 host = '0.0.0.0'  # Server IP address
@@ -13,7 +12,7 @@ def start_server():
             data, addr = s.recvfrom(1024)
             print("Server recieved ", data.decode())
             num = int(data.decode())
-            s.sendto(str(num).encode(), addr)
+            s.sendto(str(num + 1).encode(), addr)
 
 
 if __name__ == '__main__':
