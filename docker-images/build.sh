@@ -2,7 +2,7 @@ docker login
 
 cd testing || exit
 docker buildx build --platform linux/amd64 -t mrsarius/testing:latest --push .
-
+cd ..
 cd debug || exit
 docker buildx build --platform linux/amd64 -t mrsarius/debug:latest --push .
 cd ..
