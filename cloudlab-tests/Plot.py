@@ -24,6 +24,20 @@ def plot_throughput():
     plt.savefig(f"{PLOT_BASE_PATH}/throughput.pdf", bbox_inches='tight', pad_inches=0)
 
 
+def plot_throughput_box():
+    df = pd.read_csv(f'{BASE_PATH}/throughput.csv')
+    df = pd.melt(df, id_vars=['Seconds'], var_name='Measurement', value_name='Throughput')
+    df['Throughput'] = df['Throughput'] / 1e9  # bit/s to Gbit/s
+
+    plt.figure(figsize=(5, 6))
+    sns.boxplot(df["Throughput"])
+    plt.xlabel('Original Proxy')
+    plt.ylabel('Throughput [Gbit/s]')
+    plt.grid(True, which='both', linestyle='--', linewidth=0.5, alpha=0.7)
+
+    plt.savefig(f"{PLOT_BASE_PATH}/throughput_box.pdf", bbox_inches='tight', pad_inches=0)
+
+
 def plot_throughput_ebpf():
     df = pd.read_csv(f'{BASE_PATH}/throughput_ebpf.csv')
     df = pd.melt(df, id_vars=['Seconds'], var_name='Measurement', value_name='Throughput')
@@ -34,11 +48,23 @@ def plot_throughput_ebpf():
     # plt.title('Throughput of eBPF Proxy')
     plt.xlabel('Seconds')
     plt.ylabel('Throughput [Gbit/s]')
-    plt.xlim(left=1, right=20)
     plt.grid(True, which='both', linestyle='--', linewidth=0.5, alpha=0.7)
 
     plt.savefig(f"{PLOT_BASE_PATH}/throughput_ebpf.pdf", bbox_inches='tight', pad_inches=0)
 
+
+def plot_throughput_box_ebpf():
+    df = pd.read_csv(f'{BASE_PATH}/throughput_ebpf.csv')
+    df = pd.melt(df, id_vars=['Seconds'], var_name='Measurement', value_name='Throughput')
+    df['Throughput'] = df['Throughput'] / 1e9  # bit/s to Gbit/s
+
+    plt.figure(figsize=(5, 6))
+    sns.boxplot(df["Throughput"], color='orange')
+    plt.xlabel('eBPF Proxy')
+    plt.ylabel('Throughput [Gbit/s]')
+    plt.grid(True, which='both', linestyle='--', linewidth=0.5, alpha=0.7)
+
+    plt.savefig(f"{PLOT_BASE_PATH}/throughput_ebpf_box.pdf", bbox_inches='tight', pad_inches=0)
 
 def plot_throughput_compare():
     df = pd.read_csv(f'{BASE_PATH}/throughput.csv')
@@ -70,7 +96,7 @@ def plot_jitter_cdf():
     df = pd.read_csv(f'{BASE_PATH}/jitter.csv')
     df_ebpf = pd.read_csv(f'{BASE_PATH}/jitter_ebpf.csv')
 
-    plt.figure(figsize=(10, 6))
+    plt.figure()
 
     sns.ecdfplot(df['Jitter'], label='Original Proxy')
     sns.ecdfplot(df_ebpf['Jitter'], label='eBPF Proxy')
@@ -96,7 +122,7 @@ def plot_jitter_box():
     combined_df = pd.concat([df, df_ebpf])
 
     # Plot boxplots
-    plt.figure(figsize=(10, 6))
+    plt.figure()
     sns.boxplot(x='Dataset', y='Jitter', data=combined_df, hue="Dataset")
     # plt.title('Jitter Comparison of Original Proxy and eBPF Proxy')
     plt.xlabel("")
@@ -149,12 +175,12 @@ def plot_latency_ebpf():
 
 def plot_latency_cdf():
     df = pd.read_csv(f'{BASE_PATH}/latency.csv')
-    df_ebpf = pd.read_csv(f'{BASE_PATH}/latency_ebpf.csv')#
+    df_ebpf = pd.read_csv(f'{BASE_PATH}/latency_ebpf.csv')  #
 
     df = df.melt(id_vars=["Ping_Nr."], var_name="Measurement", value_name="Latency")
     df_ebpf = df_ebpf.melt(id_vars=["Ping_Nr."], var_name="Measurement", value_name="Latency")
 
-    plt.figure(figsize=(10, 6))
+    plt.figure()
 
     sns.ecdfplot(df["Latency"], label='Original Proxy')
     sns.ecdfplot(df_ebpf["Latency"], label='eBPF Proxy')
@@ -166,6 +192,7 @@ def plot_latency_cdf():
     plt.grid(True, which='both', linestyle='--', linewidth=0.5, alpha=0.7)
 
     plt.savefig(f"{PLOT_BASE_PATH}/latency_cdf.pdf", bbox_inches='tight', pad_inches=0)
+
 
 def plot_cpu():
     df = pd.read_csv(f'{BASE_PATH}/cpu_ram.csv')
@@ -208,9 +235,10 @@ def plot_cpu():
     load_patch = mpatches.Patch(color='red', alpha=alpha, label='Load')
     cleanup_patch = mpatches.Patch(color='blue', alpha=alpha, label='Cleanup')
     ewma_line = mpatches.Patch(color='black', label=f'EWMA (α={(1 / (ewma_span + 1)):.2f}) CPU Usage')
-    avg_ewma_line = mpatches.Patch(color='red', linestyle='--', label=f'Average CPU Usage During Load Phase: {avg_load_cpu_usage:.2f}%', fill=False)
+    avg_ewma_line = mpatches.Patch(color='red', linestyle='--',
+                                   label=f'Average CPU Usage During Load Phase: {avg_load_cpu_usage:.2f}%', fill=False)
 
-    # plt.title('eBPF Proxy: CPU Usage Over Time')
+    # plt.title('Original Proxy: CPU Usage Over Time')
     plt.xlabel('Time [seconds]')
     plt.ylabel('CPU Usage [%]')
     plt.legend(loc='upper left', handles=[idle_patch, load_patch, cleanup_patch, ewma_line, avg_ewma_line])
@@ -264,7 +292,8 @@ def plot_cpu_ebpf():
     load_patch = mpatches.Patch(color='red', alpha=alpha, label='Load')
     cleanup_patch = mpatches.Patch(color='blue', alpha=alpha, label='Cleanup')
     ewma_line = mpatches.Patch(color='black', label=f'EWMA (α={(1 / (ewma_span + 1)):.2f}) CPU Usage')
-    avg_ewma_line = mpatches.Patch(color='red', linestyle='--', label=f'Average CPU Usage During Load Phase: {avg_load_cpu_usage:.2f}%', fill=False)
+    avg_ewma_line = mpatches.Patch(color='red', linestyle='--',
+                                   label=f'Average CPU Usage During Load Phase: {avg_load_cpu_usage:.2f}%', fill=False)
 
     # plt.title('eBPF Proxy: CPU Usage Over Time')
     plt.xlabel('Time [seconds]]')
@@ -276,6 +305,7 @@ def plot_cpu_ebpf():
     plt.ylim(0, 30)
 
     plt.savefig(f"{PLOT_BASE_PATH}/cpu_ebpf.pdf", bbox_inches='tight', pad_inches=0)
+
 
 def plot_ram():
     df = pd.read_csv(f'{BASE_PATH}/cpu_ram.csv')
@@ -322,7 +352,8 @@ def plot_ram():
     load_patch = mpatches.Patch(color='red', alpha=alpha, label='Load')
     cleanup_patch = mpatches.Patch(color='blue', alpha=alpha, label='Cleanup')
     ewma_line = mpatches.Patch(color='black', label=f'EWMA (α={(1 / (ewma_span + 1)):.2f}) RAM Usage')
-    avg_ewma_line = mpatches.Patch(color='red', linestyle='--', label=f'Average RAM Usage During Load Phase: {avg_load_ram_usage:.2f}MB', fill=False)
+    avg_ewma_line = mpatches.Patch(color='red', linestyle='--',
+                                   label=f'Average RAM Usage During Load Phase: {avg_load_ram_usage:.2f}MB', fill=False)
 
     # plt.title('Original Proxy: RAM Usage Over Time')
     plt.xlabel('Time [seconds]')
@@ -334,6 +365,7 @@ def plot_ram():
 
     plt.tight_layout()
     plt.savefig(f"{PLOT_BASE_PATH}/ram.pdf", bbox_inches='tight', pad_inches=0)
+
 
 def plot_ram_ebpf():
     df = pd.read_csv(f'{BASE_PATH}/cpu_ram_ebpf.csv')
@@ -380,7 +412,8 @@ def plot_ram_ebpf():
     load_patch = mpatches.Patch(color='red', alpha=alpha, label='Load')
     cleanup_patch = mpatches.Patch(color='blue', alpha=alpha, label='Cleanup')
     ewma_line = mpatches.Patch(color='black', label=f'EWMA (α={(1 / (ewma_span + 1)):.2f}) RAM Usage')
-    avg_ewma_line = mpatches.Patch(color='red', linestyle='--', label=f'Average RAM Usage During Load Phase: {avg_load_ram_usage:.2f}MB', fill=False)
+    avg_ewma_line = mpatches.Patch(color='red', linestyle='--',
+                                   label=f'Average RAM Usage During Load Phase: {avg_load_ram_usage:.2f}MB', fill=False)
 
     # plt.title('eBPF Proxy: RAM Usage Over Time')
     plt.xlabel('Time [seconds]')
@@ -393,9 +426,12 @@ def plot_ram_ebpf():
     plt.tight_layout()
     plt.savefig(f"{PLOT_BASE_PATH}/ram_ebpf.pdf", bbox_inches='tight', pad_inches=0)
 
+
 def main():
     plot_throughput()
+    plot_throughput_box()
     plot_throughput_ebpf()
+    plot_throughput_box_ebpf()
     plot_throughput_compare()
 
     plot_jitter_box()
