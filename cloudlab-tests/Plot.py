@@ -17,21 +17,21 @@ def plot_bottleneck():
 
     # Plot avg latency with error bands (min/max latencies) on the first y-axis
     ax1.plot(df['target_bandwidth'], df['avg_latency'], label='One-Way Latency [ms]', color="blue")
-    ax1.fill_between(df['target_bandwidth'], df['min_latency'], df['max_latency'], color="blue", alpha=0.2,
-                     label='Latency Range')
+    # ax1.fill_between(df['target_bandwidth'], df['min_latency'], df['max_latency'], color="blue", alpha=0.2,
+    # label='Latency Range')
 
-    ax1.set_xlabel('Target Bandwidth (Mbit/s)')
-    ax1.set_ylabel('Latency (ms)')
+    ax1.set_xlabel('Target Bandwidth [Mbit/s]')
+    ax1.set_ylabel('Latency [ms]', color="blue")
 
     # Second y-axis for loss percentage
     ax2 = ax1.twinx()
     ax2.plot(df['target_bandwidth'], df['loss_percentage'], label='Loss [%]', color="red")
-    ax2.set_ylabel('Loss [%]')
+    ax2.set_ylabel('Loss [%]', color="red")
     ax2.set_ylim(0, 100)
 
     # Add legends for both y-axes
-    ax1.legend(loc='upper left')
-    ax2.legend(loc='upper right')
+    # ax1.legend(loc='upper left')
+    # ax2.legend(loc='upper right')
 
     plt.grid(True, which='both', linestyle='--', linewidth=0.5, alpha=0.7)
 
