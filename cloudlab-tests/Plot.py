@@ -20,7 +20,7 @@ def plot_bottleneck():
     # ax1.fill_between(df['target_bandwidth'], df['min_latency'], df['max_latency'], color="blue", alpha=0.2,
     # label='Latency Range')
 
-    ax1.set_xlabel('Target Bandwidth [Mbit/s]')
+    ax1.set_xlabel('Target Throughput [Mbit/s]')
     ax1.set_ylabel('Latency [ms]', color="blue")
 
     # Second y-axis for loss percentage
