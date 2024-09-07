@@ -236,7 +236,7 @@ def test_bottleneck(bw):
         succeeded, returntext = check_deployment(microservices, SYSTEM_MANAGER_URL)
 
     print("Waiting for test results.")
-    time.sleep(10)
+    time.sleep(30)
 
     return get_results(deployment_descriptor)
 
