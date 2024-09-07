@@ -8,6 +8,37 @@ from Parser import BASE_PATH
 PLOT_BASE_PATH = "plots"
 
 
+def plot_bottleneck():
+    # Load the dataset
+    df = pd.read_csv(f'{BASE_PATH}/bottleneck.csv')
+
+    # Create the figure and axis objects
+    fig, ax1 = plt.subplots(figsize=(10, 6))
+
+    # Plot avg latency with error bands (min/max latencies) on the first y-axis
+    ax1.plot(df['target_bandwidth'], df['avg_latency'], label='One-Way Latency [ms]', color="blue")
+    ax1.fill_between(df['target_bandwidth'], df['min_latency'], df['max_latency'], color="blue", alpha=0.2,
+                     label='Latency Range')
+
+    ax1.set_xlabel('Target Bandwidth (Mbit/s)')
+    ax1.set_ylabel('Latency (ms)')
+
+    # Second y-axis for loss percentage
+    ax2 = ax1.twinx()
+    ax2.plot(df['target_bandwidth'], df['loss_percentage'], label='Loss [%]', color="red")
+    ax2.set_ylabel('Loss [%]')
+    ax2.set_ylim(0, 100)
+
+    # Add legends for both y-axes
+    ax1.legend(loc='upper left')
+    ax2.legend(loc='upper right')
+
+    plt.grid(True, which='both', linestyle='--', linewidth=0.5, alpha=0.7)
+
+    # Save the plot as a PDF
+    plt.savefig(f"{PLOT_BASE_PATH}/bottleneck.pdf", bbox_inches='tight', pad_inches=0)
+
+
 def plot_throughput():
     df = pd.read_csv(f'{BASE_PATH}/throughput.csv')
     df = pd.melt(df, id_vars=['Seconds'], var_name='Measurement', value_name='Throughput')
@@ -428,6 +459,8 @@ def plot_ram_ebpf():
 
 
 def main():
+    plot_bottleneck()
+
     plot_throughput()
     plot_throughput_box()
     plot_throughput_ebpf()

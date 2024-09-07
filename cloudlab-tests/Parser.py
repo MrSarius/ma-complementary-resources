@@ -60,11 +60,55 @@ def parse_throughput_samples(samples: [], filename: str):
     df = pd.DataFrame(data)
     df.to_csv(f"{BASE_PATH}/{filename}.csv", index=False)
 
+
 def parse_cpu_ram_samples(samples: [], filename: str):
     for i in range(len(samples)):
         samples[i]['measurement'] = i
     pd.concat(samples, ignore_index=True).to_csv(f"{BASE_PATH}/{filename}.csv", index=False)
 
 
-    # df = pd.DataFrame(data)
-    # df.to_csv(f"{BASE_PATH}/{filename}.csv", index=False)
+def parse_bottleneck_samples(samples: [], target_bws, filename: str):
+    if len(target_bws) != len(samples):
+        print("Error parsing bottleneck measurement.")
+        return
+
+    latency_regex = r"(\d+\.\d+|\d+)/(\d+\.\d+|\d+)/(\d+\.\d+|\d+)/(\d+\.\d+) ms"
+    lost_total_regex = r"(\d+)/(\d+) \((\d+\.\d+|\d+)%\)"
+
+    data = {
+        'target_bandwidth': target_bws,
+        'avg_latency': [],
+        'min_latency': [],
+        'max_latency': [],
+        'loss_percentage': []
+    }
+
+    for sample in samples:
+        latency_match = re.search(latency_regex, sample)
+        if latency_match:
+            avg_latency = float(latency_match.group(1))
+            min_latency = float(latency_match.group(2))
+            max_latency = float(latency_match.group(3))
+            stdev_latency = float(latency_match.group(4))
+        else:
+            print("Error parsing bottleneck measurement.")
+            return
+
+        # Find the lost and total datagrams
+        lost_total_match = re.search(lost_total_regex, sample)
+        if lost_total_match:
+            lost = int(lost_total_match.group(1))
+            total = int(lost_total_match.group(2))
+            lost_percentage = float(lost_total_match.group(3))
+        else:
+            print("Error parsing bottleneck measurement.")
+            return
+
+        data['avg_latency'].append(avg_latency)
+        data['min_latency'].append(min_latency)
+        data['max_latency'].append(max_latency)
+        data['loss_percentage'].append(lost_percentage)
+
+    df = pd.DataFrame(data)
+    df.to_csv(f"{BASE_PATH}/{filename}.csv", index=False)
+

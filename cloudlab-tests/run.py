@@ -6,7 +6,8 @@ import socket
 
 from Common import (enable_ebpf_proxy, register_app, scale_up_service, check_deployment, get_results, clean,
                     CpuRamCollector)
-from Parser import parse_cpu_ram_samples, parse_jitter_samples, parse_latency_samples, parse_throughput_samples
+from Parser import parse_cpu_ram_samples, parse_jitter_samples, parse_latency_samples, parse_throughput_samples, \
+    parse_bottleneck_samples
 
 hostname = socket.gethostname()
 IPAddr = socket.gethostbyname(hostname)
@@ -200,6 +201,46 @@ def test_ram_cpu(enable_ebpf: bool):
     return collector.stop_collecting_cpu_ram()
 
 
+def test_bottleneck(bw):
+    print(f"*** Bottleneck Test {bw} Mbit/s ***")
+    deployment_descriptor = json.load(open("SLAs/test-bottleneck.json"))
+    deployment_descriptor['applications'][0]['microservices'][1]['environment'] = [f"BANDWIDTH={bw}M"]
+
+    print("Performing cleanup")
+    clean(SYSTEM_MANAGER_URL, NET_MANAGER_URL)
+
+    print("Registration of the Application")
+    appid, microservices = register_app(SYSTEM_MANAGER_URL, deployment_descriptor)
+    if appid == "":
+        print("App registration failed")
+        clean(SYSTEM_MANAGER_URL, NET_MANAGER_URL)
+        exit(1)
+    signal.signal(signal.SIGINT, signal_handler)
+
+    scale_up_service(1, microservices[0], SYSTEM_MANAGER_URL)
+    scale_up_service(1, microservices[1], SYSTEM_MANAGER_URL)
+
+    time.sleep(15)
+
+    print("Check deployment status")
+    succeeded, returntext = check_deployment(microservices, SYSTEM_MANAGER_URL)
+    attempt = 1
+    while not succeeded:
+        if attempt > 3:
+            print("Deployment failed with error: ", returntext)
+            clean(SYSTEM_MANAGER_URL, NET_MANAGER_URL)
+            exit(1)
+        attempt += 1
+        print("Deployment not finished yet")
+        time.sleep(10)
+        succeeded, returntext = check_deployment(microservices, SYSTEM_MANAGER_URL)
+
+    print("Waiting for test results.")
+    time.sleep(10)
+
+    return get_results(deployment_descriptor)
+
+
 def main():
     test_repetitions = 30
 
@@ -208,10 +249,18 @@ def main():
     jitter_samples = []
     cpu_ram_samples = []
 
+    bottleneck_samples = []
+
     latency_samples_ebpf = []
     throughput_samples_ebpf = []
     jitter_samples_ebpf = []
     cpu_ram_samples_ebpf = []
+
+    target_bws = ["50", "100", "150", "200", "250", "300", "350", "400", "450", "500"]
+    for bw in target_bws:
+        bottleneck_samples.append(test_bottleneck(bw))
+    parse_bottleneck_samples(bottleneck_samples, target_bws, "bottleneck")
+    bottleneck_samples.clear()
 
     while len(cpu_ram_samples) < test_repetitions:
         cpu_ram_samples.append(test_ram_cpu(enable_ebpf=False))

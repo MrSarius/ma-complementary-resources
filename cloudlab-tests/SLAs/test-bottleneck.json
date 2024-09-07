@@ -1,0 +1,70 @@
+{
+  "sla_version": "v2.0",
+  "customerID": "Admin",
+  "applications": [
+    {
+      "applicationID": "",
+      "application_name": "test1",
+      "application_namespace": "test",
+      "application_desc": "",
+      "microservices": [
+        {
+          "microservice_name": "server",
+          "microservice_namespace": "test",
+          "virtualization": "docker",
+          "description": "",
+          "memory": 0,
+          "vcpus": 0,
+          "vgpus": 0,
+          "vtpus": 0,
+          "bandwidth_in": 0,
+          "bandwidth_out": 0,
+          "storage": 0,
+          "code": "docker.io/mrsarius/testing:latest",
+          "state": "",
+          "port": "",
+          "addresses": {
+            "rr_ip": "10.30.0.1"
+          },
+          "added_files": [],
+          "constraints": [],
+          "connectivity": [],
+          "cmd": [
+            "iperf",
+            "-s",
+            "-u",
+            "-e",
+            "-i",
+            "1"
+          ],
+          "environment": []
+        },
+        {
+          "microservice_name": "client",
+          "microservice_namespace": "test",
+          "virtualization": "docker",
+          "description": "",
+          "memory": 0,
+          "vcpus": 0,
+          "vgpus": 0,
+          "vtpus": 0,
+          "bandwidth_in": 0,
+          "bandwidth_out": 0,
+          "storage": 0,
+          "code": "docker.io/mrsarius/testing:latest",
+          "state": "",
+          "port": "",
+          "added_files": [],
+          "constraints": [],
+          "connectivity": [],
+          "cmd": [
+            "sh",
+            "-c",
+            "iperf -c 10.30.0.1 -u -b $BANDWIDTH -t 10 -l 1470 > results.json; echo done >> results.json; tail -f /dev/null"
+          ],
+          "environment": ["BANDWIDTH=100"]
+        }
+      ]
+    }
+  ]
+}
