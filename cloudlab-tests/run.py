@@ -236,7 +236,7 @@ def test_bottleneck(bw):
         succeeded, returntext = check_deployment(microservices, SYSTEM_MANAGER_URL)
 
     print("Waiting for test results.")
-    time.sleep(30)
+    time.sleep(60)
 
     return get_results(deployment_descriptor)
 
@@ -256,7 +256,7 @@ def main():
     jitter_samples_ebpf = []
     cpu_ram_samples_ebpf = []
 
-    target_bws = ["50", "100", "150", "200", "250", "300", "350", "400", "450", "500"]
+    target_bws = ["1", "50", "100", "150", "200", "250", "300", "350", "400", "450", "500"]
     for bw in target_bws:
         bottleneck_samples.append(test_bottleneck(bw))
     parse_bottleneck_samples(bottleneck_samples, target_bws, "bottleneck")

@@ -60,7 +60,7 @@
           "cmd": [
             "sh",
             "-c",
-            "iperf -c 10.30.0.1 -u -b $BANDWIDTH -t 30 > results.json; echo done >> results.json; tail -f /dev/null"
+            "iperf -c 10.30.0.1 -u -b $BANDWIDTH -t 60 > results.json; echo done >> results.json; tail -f /dev/null"
           ],
           "environment": ["BANDWIDTH=100"]
         }

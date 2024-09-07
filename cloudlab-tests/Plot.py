@@ -21,7 +21,8 @@ def plot_bottleneck():
     # label='Latency Range')
 
     ax1.set_xlabel('Target Throughput [Mbit/s]')
-    ax1.set_ylabel('Latency [ms]', color="blue")
+    ax1.set_ylabel('Average Latency [ms]', color="blue")
+    ax1.set_xlim(left=1)
 
     # Second y-axis for loss percentage
     ax2 = ax1.twinx()
