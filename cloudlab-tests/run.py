@@ -4,9 +4,9 @@ import json
 import signal
 import socket
 
-from Common import (enable_ebpf_proxy, register_app, scale_up_service, check_deployment, get_results, clean,
+from common import (enable_ebpf_proxy, register_app, scale_up_service, check_deployment, get_results, clean,
                     CpuRamCollector)
-from Parser import parse_cpu_ram_samples, parse_jitter_samples, parse_latency_samples, parse_throughput_samples, \
+from parser import parse_cpu_ram_samples, parse_jitter_samples, parse_latency_samples, parse_throughput_samples, \
     parse_bottleneck_samples
 
 hostname = socket.gethostname()
