@@ -3,7 +3,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 
-from Parser import BASE_PATH
+from parser import BASE_PATH
 
 PLOT_BASE_PATH = "plots"
 

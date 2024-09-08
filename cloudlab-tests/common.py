@@ -7,7 +7,7 @@ import requests
 import random
 import subprocess
 
-from Parser import BASE_PATH
+from parser import BASE_PATH
 
 
 def clean(system_manager_url, net_mananger_url):
