@@ -16,12 +16,12 @@ def plot_bottleneck():
     fig, ax1 = plt.subplots(figsize=(10, 6))
 
     # Plot avg latency with error bands (min/max latencies) on the first y-axis
-    ax1.plot(df['target_bandwidth'], df['avg_latency'], label='One-Way Latency [ms]', color="blue")
+    ax1.plot(df['target_bandwidth'], df['avg_latency'], label='Average One-Way Latency [ms]', color="blue")
     # ax1.fill_between(df['target_bandwidth'], df['min_latency'], df['max_latency'], color="blue", alpha=0.2,
     # label='Latency Range')
 
     ax1.set_xlabel('Target Throughput [Mbit/s]')
-    ax1.set_ylabel('Average Latency [ms]', color="blue")
+    ax1.set_ylabel('Average One-Way Latency [ms]', color="blue")
     ax1.set_xlim(left=1)
 
     # Second y-axis for loss percentage
