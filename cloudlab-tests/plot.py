@@ -6,6 +6,10 @@ import matplotlib.patches as mpatches
 from parser import BASE_PATH
 
 PLOT_BASE_PATH = "plots"
+plt.rcParams['font.family'] = 'serif'
+plt.rcParams['font.serif'] = ['Palatino']
+plt.rcParams['font.size'] = 10
+TEXT_WIDTH = 5.78853  # inches
 
 
 def plot_bottleneck():
@@ -13,7 +17,7 @@ def plot_bottleneck():
     df = pd.read_csv(f'{BASE_PATH}/bottleneck.csv')
 
     # Create the figure and axis objects
-    fig, ax1 = plt.subplots(figsize=(10, 6))
+    fig, ax1 = plt.subplots(figsize=(TEXT_WIDTH, 3))
 
     # Plot avg latency with error bands (min/max latencies) on the first y-axis
     ax1.plot(df['target_bandwidth'], df['avg_latency'], label='Average One-Way Latency [ms]', color="blue")
@@ -22,7 +26,7 @@ def plot_bottleneck():
 
     ax1.set_xlabel('Target Throughput [Mbit/s]')
     ax1.set_ylabel('Average One-Way Latency [ms]', color="blue")
-    ax1.set_xlim(left=1)
+    ax1.set_xlim(1, 500)
 
     # Second y-axis for loss percentage
     ax2 = ax1.twinx()
@@ -30,9 +34,9 @@ def plot_bottleneck():
     ax2.set_ylabel('Loss [%]', color="red")
     ax2.set_ylim(0, 100)
 
-    # Add legends for both y-axes
-    # ax1.legend(loc='upper left')
-    # ax2.legend(loc='upper right')
+    bottleneck_line = ax1.axvline(x=250, color='green', linestyle='--', linewidth=1.5, label='Bottleneck')
+
+    ax1.legend(handles=[bottleneck_line], loc='upper left')
 
     plt.grid(True, which='both', linestyle='--', linewidth=0.5, alpha=0.7)
 
@@ -61,7 +65,7 @@ def plot_throughput_box():
     df = pd.melt(df, id_vars=['Seconds'], var_name='Measurement', value_name='Throughput')
     df['Throughput'] = df['Throughput'] / 1e9  # bit/s to Gbit/s
 
-    plt.figure(figsize=(5, 6))
+    plt.figure(figsize=(0.45 * TEXT_WIDTH, 4))
     sns.boxplot(df["Throughput"])
     plt.xlabel('Original Proxy')
     plt.ylabel('Throughput [Gbit/s]')
@@ -90,13 +94,14 @@ def plot_throughput_box_ebpf():
     df = pd.melt(df, id_vars=['Seconds'], var_name='Measurement', value_name='Throughput')
     df['Throughput'] = df['Throughput'] / 1e9  # bit/s to Gbit/s
 
-    plt.figure(figsize=(5, 6))
+    plt.figure(figsize=(0.45 * TEXT_WIDTH, 3.8))
     sns.boxplot(df["Throughput"], color='orange')
     plt.xlabel('eBPF Proxy')
     plt.ylabel('Throughput [Gbit/s]')
     plt.grid(True, which='both', linestyle='--', linewidth=0.5, alpha=0.7)
 
     plt.savefig(f"{PLOT_BASE_PATH}/throughput_ebpf_box.pdf", bbox_inches='tight', pad_inches=0)
+
 
 def plot_throughput_compare():
     df = pd.read_csv(f'{BASE_PATH}/throughput.csv')
@@ -128,7 +133,7 @@ def plot_jitter_cdf():
     df = pd.read_csv(f'{BASE_PATH}/jitter.csv')
     df_ebpf = pd.read_csv(f'{BASE_PATH}/jitter_ebpf.csv')
 
-    plt.figure()
+    plt.figure(figsize=(0.45 * TEXT_WIDTH, 3.65))
 
     sns.ecdfplot(df['Jitter'], label='Original Proxy')
     sns.ecdfplot(df_ebpf['Jitter'], label='eBPF Proxy')
@@ -154,7 +159,7 @@ def plot_jitter_box():
     combined_df = pd.concat([df, df_ebpf])
 
     # Plot boxplots
-    plt.figure()
+    plt.figure(figsize=(0.45 * TEXT_WIDTH, 4))
     sns.boxplot(x='Dataset', y='Jitter', data=combined_df, hue="Dataset")
     # plt.title('Jitter Comparison of Original Proxy and eBPF Proxy')
     plt.xlabel("")
@@ -212,7 +217,7 @@ def plot_latency_cdf():
     df = df.melt(id_vars=["Ping_Nr."], var_name="Measurement", value_name="Latency")
     df_ebpf = df_ebpf.melt(id_vars=["Ping_Nr."], var_name="Measurement", value_name="Latency")
 
-    plt.figure()
+    plt.figure(figsize=(TEXT_WIDTH, 3))
 
     sns.ecdfplot(df["Latency"], label='Original Proxy')
     sns.ecdfplot(df_ebpf["Latency"], label='eBPF Proxy')
@@ -229,7 +234,7 @@ def plot_latency_cdf():
 def plot_cpu():
     df = pd.read_csv(f'{BASE_PATH}/cpu_ram.csv')
     alpha = 0.1  # Transparency level
-    ewma_span = 20
+    ewma_alpha = 0.2
 
     # Normalize the timestamps so that each measurement starts at time zero
     df['relative_time'] = df.groupby('measurement')['timestamp'].transform(lambda x: x - x.min())
@@ -242,7 +247,7 @@ def plot_cpu():
     third = max_time_seconds / 3
 
     # Plot CPU usage over relative time with light grey lines
-    plt.figure(figsize=(14, 7))
+    plt.figure(figsize=(TEXT_WIDTH, 3))
 
     # Shade the background with specified colors
     plt.axvspan(0, third, facecolor='green', alpha=alpha)
@@ -255,7 +260,7 @@ def plot_cpu():
         plt.plot(subset['relative_time_seconds'], subset['cpu_usage'], color='lightgrey')
 
     # Calculate and plot the EWMA of CPU usage
-    ewma_cpu_usage = df.groupby('relative_time_seconds')['cpu_usage'].mean().ewm(span=ewma_span).mean()
+    ewma_cpu_usage = df.groupby('relative_time_seconds')['cpu_usage'].mean().ewm(alpha=ewma_alpha).mean()
     plt.plot(ewma_cpu_usage.index, ewma_cpu_usage.values, color='black', linewidth=2, label='EWMA CPU Usage')
 
     # Calculate and plot the average CPU usage during the load phase
@@ -266,7 +271,7 @@ def plot_cpu():
     idle_patch = mpatches.Patch(color='green', alpha=alpha, label='Idle')
     load_patch = mpatches.Patch(color='red', alpha=alpha, label='Load')
     cleanup_patch = mpatches.Patch(color='blue', alpha=alpha, label='Cleanup')
-    ewma_line = mpatches.Patch(color='black', label=f'EWMA (α={(1 / (ewma_span + 1)):.2f}) CPU Usage')
+    ewma_line = mpatches.Patch(color='black', label=f'EWMA (α={ewma_alpha}) CPU Usage')
     avg_ewma_line = mpatches.Patch(color='red', linestyle='--',
                                    label=f'Average CPU Usage During Load Phase: {avg_load_cpu_usage:.2f}%', fill=False)
 
@@ -277,7 +282,7 @@ def plot_cpu():
 
     # Set xlim to start at 0
     plt.xlim(0, max_time_seconds)
-    plt.ylim(0, 30)
+    plt.ylim(0, 50)
 
     plt.savefig(f"{PLOT_BASE_PATH}/cpu.pdf", bbox_inches='tight', pad_inches=0)
 
@@ -286,7 +291,7 @@ def plot_cpu_ebpf():
     df = pd.read_csv(f'{BASE_PATH}/cpu_ram_ebpf.csv')
 
     alpha = 0.1  # Transparency level
-    ewma_span = 20
+    ewma_alpha = 0.2
 
     # Normalize the timestamps so that each measurement starts at time zero
     df['relative_time'] = df.groupby('measurement')['timestamp'].transform(lambda x: x - x.min())
@@ -299,7 +304,7 @@ def plot_cpu_ebpf():
     third = max_time_seconds / 3
 
     # Plot CPU usage over relative time with light grey lines
-    plt.figure(figsize=(14, 7))
+    plt.figure(figsize=(TEXT_WIDTH, 3))
 
     # Shade the background with specified colors
     plt.axvspan(0, third, facecolor='green', alpha=alpha)
@@ -312,7 +317,7 @@ def plot_cpu_ebpf():
         plt.plot(subset['relative_time_seconds'], subset['cpu_usage'], color='lightgrey')
 
     # Calculate and plot the EWMA of CPU usage
-    ewma_cpu_usage = df.groupby('relative_time_seconds')['cpu_usage'].mean().ewm(span=ewma_span).mean()
+    ewma_cpu_usage = df.groupby('relative_time_seconds')['cpu_usage'].mean().ewm(alpha=ewma_alpha).mean()
     plt.plot(ewma_cpu_usage.index, ewma_cpu_usage.values, color='black', linewidth=2, label='EWMA CPU Usage')
 
     # Calculate and plot the average CPU usage during the load phase
@@ -323,7 +328,7 @@ def plot_cpu_ebpf():
     idle_patch = mpatches.Patch(color='green', alpha=alpha, label='Idle')
     load_patch = mpatches.Patch(color='red', alpha=alpha, label='Load')
     cleanup_patch = mpatches.Patch(color='blue', alpha=alpha, label='Cleanup')
-    ewma_line = mpatches.Patch(color='black', label=f'EWMA (α={(1 / (ewma_span + 1)):.2f}) CPU Usage')
+    ewma_line = mpatches.Patch(color='black', label=f'EWMA (α={ewma_alpha}) CPU Usage')
     avg_ewma_line = mpatches.Patch(color='red', linestyle='--',
                                    label=f'Average CPU Usage During Load Phase: {avg_load_cpu_usage:.2f}%', fill=False)
 
@@ -334,16 +339,56 @@ def plot_cpu_ebpf():
 
     # Set xlim to start at 0
     plt.xlim(0, max_time_seconds)
-    plt.ylim(0, 30)
+    plt.ylim(0, 50)
 
     plt.savefig(f"{PLOT_BASE_PATH}/cpu_ebpf.pdf", bbox_inches='tight', pad_inches=0)
+
+
+def plot_ram_increase_bar():
+    df1 = pd.read_csv(f'{BASE_PATH}/cpu_ram.csv')
+    df2 = pd.read_csv(f'{BASE_PATH}/cpu_ram_ebpf.csv')
+
+    # Filter data for idle and load phases for both datasets
+    idle_data1 = df1[df1['status'] == 'idle']
+    load_data1 = df1[df1['status'] == 'load']
+
+    idle_data2 = df2[df2['status'] == 'idle']
+    load_data2 = df2[df2['status'] == 'load']
+
+    # Calculate average RAM usage for idle and load phases
+    idle_avg_ram1 = idle_data1['used_ram'].mean()
+    load_avg_ram1 = load_data1['used_ram'].mean()
+
+    idle_avg_ram2 = idle_data2['used_ram'].mean()
+    load_avg_ram2 = load_data2['used_ram'].mean()
+
+    # Calculate relative increase in RAM usage
+    relative_increase1 = (load_avg_ram1 - idle_avg_ram1) / idle_avg_ram1 * 100
+    relative_increase2 = (load_avg_ram2 - idle_avg_ram2) / idle_avg_ram2 * 100
+
+    # Create a DataFrame for plotting the relative increases
+    ram_increase_data = pd.DataFrame({
+        'Measurement': ['Measurement 1', 'Measurement 2'],
+        'Relative RAM Increase (%)': [relative_increase1, relative_increase2]
+    })
+
+    # Plot the relative increase in RAM usage
+    plt.figure(figsize=(8, 6))
+    sns.barplot(x='Measurement', y='Relative RAM Increase (%)', data=ram_increase_data, palette='Set2')
+
+    # Add title and labels
+    plt.title('Relative Increase in RAM Usage from Idle to Load Phase')
+    plt.ylabel('Relative RAM Increase (%)')
+
+    plt.tight_layout()
+    plt.savefig(f"{PLOT_BASE_PATH}/ram_increase.pdf", bbox_inches='tight', pad_inches=0)
 
 
 def plot_ram():
     df = pd.read_csv(f'{BASE_PATH}/cpu_ram.csv')
 
     alpha = 0.1  # Transparency level
-    ewma_span = 20
+    ewma_alpha = 0.2
 
     # Normalize the timestamps so that each measurement starts at time zero
     df['relative_time'] = df.groupby('measurement')['timestamp'].transform(lambda x: x - x.min())
@@ -372,7 +417,7 @@ def plot_ram():
         plt.plot(subset['relative_time_seconds'], subset['used_ram'], color='lightgrey')
 
     # Calculate and plot the EWMA of RAM usage
-    ewma_ram_usage = df.groupby('relative_time_seconds')['used_ram'].mean().ewm(span=ewma_span).mean()
+    ewma_ram_usage = df.groupby('relative_time_seconds')['used_ram'].mean().ewm(alpha=ewma_alpha).mean()
     plt.plot(ewma_ram_usage.index, ewma_ram_usage.values, color='black', linewidth=2, label='EWMA RAM Usage')
 
     # Calculate and plot the average RAM usage during the load phase
@@ -383,7 +428,7 @@ def plot_ram():
     idle_patch = mpatches.Patch(color='green', alpha=alpha, label='Idle')
     load_patch = mpatches.Patch(color='red', alpha=alpha, label='Load')
     cleanup_patch = mpatches.Patch(color='blue', alpha=alpha, label='Cleanup')
-    ewma_line = mpatches.Patch(color='black', label=f'EWMA (α={(1 / (ewma_span + 1)):.2f}) RAM Usage')
+    ewma_line = mpatches.Patch(color='black', label=f'EWMA (α={ewma_alpha}) RAM Usage')
     avg_ewma_line = mpatches.Patch(color='red', linestyle='--',
                                    label=f'Average RAM Usage During Load Phase: {avg_load_ram_usage:.2f}MB', fill=False)
 
@@ -403,7 +448,7 @@ def plot_ram_ebpf():
     df = pd.read_csv(f'{BASE_PATH}/cpu_ram_ebpf.csv')
 
     alpha = 0.1  # Transparency level
-    ewma_span = 20
+    ewma_alpha = 0.2
 
     # Normalize the timestamps so that each measurement starts at time zero
     df['relative_time'] = df.groupby('measurement')['timestamp'].transform(lambda x: x - x.min())
@@ -432,7 +477,7 @@ def plot_ram_ebpf():
         plt.plot(subset['relative_time_seconds'], subset['used_ram'], color='lightgrey')
 
     # Calculate and plot the EWMA of RAM usage
-    ewma_ram_usage = df.groupby('relative_time_seconds')['used_ram'].mean().ewm(span=ewma_span).mean()
+    ewma_ram_usage = df.groupby('relative_time_seconds')['used_ram'].mean().ewm(alpha=ewma_alpha).mean()
     plt.plot(ewma_ram_usage.index, ewma_ram_usage.values, color='black', linewidth=2, label='EWMA RAM Usage')
 
     # Calculate and plot the average RAM usage during the load phase
@@ -443,7 +488,7 @@ def plot_ram_ebpf():
     idle_patch = mpatches.Patch(color='green', alpha=alpha, label='Idle')
     load_patch = mpatches.Patch(color='red', alpha=alpha, label='Load')
     cleanup_patch = mpatches.Patch(color='blue', alpha=alpha, label='Cleanup')
-    ewma_line = mpatches.Patch(color='black', label=f'EWMA (α={(1 / (ewma_span + 1)):.2f}) RAM Usage')
+    ewma_line = mpatches.Patch(color='black', label=f'EWMA (α={ewma_alpha}) RAM Usage')
     avg_ewma_line = mpatches.Patch(color='red', linestyle='--',
                                    label=f'Average RAM Usage During Load Phase: {avg_load_ram_usage:.2f}MB', fill=False)
 
@@ -480,6 +525,7 @@ def main():
 
     plot_ram()
     plot_ram_ebpf()
+    plot_ram_increase_bar()
 
 
 if __name__ == '__main__':
